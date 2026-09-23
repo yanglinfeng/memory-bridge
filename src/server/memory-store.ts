@@ -93,381 +93,53 @@ import { MEMORY_KINDS } from './types.js';
 import type { CorpusDomain } from './types.js';
 import type { MemoryClassification } from './types.js';
 
-type DatabaseRow = Record<string, unknown>;
-
-interface IndexedRecallCandidate {
-  memory: MemoryRecord;
-  semanticRevision: number;
-  retrieval: HybridCandidate;
-  rawEmbedding: unknown;
-  queryVariantHits: string[];
-}
-
-interface IndexedRecallSearch {
-  candidates: IndexedRecallCandidate[];
-  diagnostics: HybridSearchDiagnostics;
-}
-
-interface QueryVariant {
-  query: string;
-  type:
-    | 'original'
-    | 'contextual'
-    | 'contextual_variant'
-    | 'normalized'
-    | 'alias'
-    | 'llm';
-}
-
-interface MemoryEvidenceDigest {
-  versionId: string | null;
-  proofCount: number;
-  firstEvidenceAt: string | null;
-  lastEvidenceAt: string | null;
-  excerpts: string[];
-  evidence: Array<{
-    evidenceType: string;
-    turnId: string | null;
-    sourceRef: string | null;
-  }>;
-}
-
-type TemporalRetrievalKind =
-  | 'history_sequence'
-  | 'recent'
-  | 'today'
-  | 'yesterday'
-  | 'tomorrow'
-  | 'this_week'
-  | 'last_week'
-  | 'next_week'
-  | 'this_month'
-  | 'last_month';
-
-interface TemporalRetrievalPlan {
-  kind: TemporalRetrievalKind;
-  label: string;
-  referenceAt: string;
-  rangeStartMs: number | null;
-  rangeEndMs: number | null;
-}
-
-interface TemporalCandidateSignal {
-  score: number;
-  anchorAt: string;
-  anchorSource:
-    | 'trusted_user_evidence'
-    | 'occurred_at'
-    | 'last_seen_at'
-    | 'updated_at';
-}
-
-export interface ReliableRecallOptions {
-  qosClass?: 'foreground' | 'background';
-  queryUnderstanding?: QueryUnderstandingResult;
-  qualityFallback?: () => Promise<QueryUnderstandingResult>;
-  qualityFallbackAttempted?: boolean;
-  traceContext?: {
-    source: 'mcp' | 'lifecycle' | 'http';
-    correlationId: string;
-  };
-  onTraceCreated?: (traceId: string) => void;
-}
-
-interface RetrievalCandidateDecision {
-  memoryId: string;
-  stage: 'semantic' | 'rerank' | 'selection';
-  decision: 'rejected' | 'not_evaluated';
-  evaluated: boolean;
-  reasonCode: string;
-  score?: number;
-  threshold?: number;
-}
-
-interface DenseIndexMemory {
-  memory: MemoryRecord;
-  semanticRevision: number;
-}
-
-export interface DenseIndexWatermark {
-  generationId: string | null;
-  modelId: string | null;
-  model: string | null;
-  indexVersion: string;
-  dimensions: number | null;
-  generationKey: string | null;
-  eligible: number;
-  indexed: number;
-  complete: boolean;
-}
-
-export interface DenseBackfillResult extends DenseIndexWatermark {
-  processed: number;
-  available: boolean;
-  telemetry: DenseIndexTelemetry;
-}
-
-export interface DenseIndexTelemetry {
-  batchSize: number;
-  batchLeaderJobId: string | null;
-  physicalWorkAttributed: boolean;
-  probeDurationMs: number;
-  embeddingDurationMs: number;
-  databaseWriteDurationMs: number;
-  watermarkDurationMs: number;
-  embeddingBatchCalls: number;
-  watermarkDeferred: boolean;
-}
-
-export interface DenseIncrementalIndexOptions {
-  /**
-   * A queued single-memory job may defer the expensive scope-wide watermark
-   * until it is the last open index job for the same scope and generation.
-   */
-  deferScopeWatermarkUntilQueueTail?: boolean;
-  currentJobId?: string;
-  currentJobIds?: string[];
-  deferScopeWatermarkAlways?: boolean;
-  /** The worker already probed and registered its generation capabilities. */
-  reusePreparedGenerationProbe?: boolean;
-}
-
-export interface DenseIndexEvaluationCaseResult {
-  caseId: string;
-  expectedMemoryId: string;
-  retrievedMemoryIds: string[];
-  rank: number | null;
-  hitAt20: boolean;
-  reciprocalRank: number;
-}
-
-export interface DenseIndexEvaluationReport {
-  evaluationId: string;
-  generationId: string;
-  modelId: string;
-  embeddingModel: string;
-  generationKey: string;
-  dimensions: number;
-  datasetId: string;
-  datasetSha256: string;
-  evaluatorVersion: string;
-  queryCount: number;
-  recallAt20: number;
-  mrrAt10: number;
-  passed: boolean;
-  startedAt: string;
-  completedAt: string;
-  cases: DenseIndexEvaluationCaseResult[];
-}
-
-export interface ObserveMemoryInput {
-  expectedRevision: number;
-  evidenceTurnId?: string;
-  evidenceExcerpt?: string;
-  sourceRef?: string;
-  sensitivity: MemoryRecord['sensitivity'];
-  sourceAuthority: MemoryRecord['sourceAuthority'];
-  idempotencyKey?: string;
-}
-
-export interface TombstoneWriteAuthorization {
-  purpose: 'restore-reconciliation';
-  tombstoneId: string;
-}
-
-export interface ForgetTransactionAuthorization {
-  expectedNamespace: string;
-  authorizedScopes: readonly MemoryAccessScope[];
-  beforeCommit?: (deleted: MemoryRecord) => void;
-}
-
-export interface RestoreMemoryInput {
-  confirmation?: 'replace';
-  confirmationToken?: string;
-}
-
-export interface RestoreAssessmentSnapshot {
-  relation: ClaimRelationAssessment['relation'];
-  targetMemoryId: string | null;
-  method: ClaimRelationAssessment['method'];
-  confidence: number;
-  rationale: string;
-  model: string | null;
-  promptVersion: string | null;
-  actionPlan: 'restore' | 'merge' | 'replace';
-}
-
-export interface RestoreDecisionResult {
-  status: 'restored' | 'merged' | 'requires_confirmation';
-  memory: MemoryRecord;
-  conflicts: MemoryRecord[];
-  tombstonesRestored: number;
-  confirmationToken: string | null;
-  assessment: RestoreAssessmentSnapshot | null;
-}
-
-const memoryStatusSchema = z.enum([
-  'active',
-  'superseded',
-  'archived',
-  'deleted',
-]);
-const isoDateSchema = z.string().datetime({ offset: true });
-const nullableIsoDateSchema = isoDateSchema.nullable();
-const DENSE_GENERATION_PROBE =
-  'memory-bridge dense generation probe';
-const backupMemorySchema = z.object({
-  id: z.string().uuid(),
-  userId: z.string().min(1),
-  namespace: z.string().min(1),
-  scopeType: z.enum([
-    'personal',
-    'project',
-    'role',
-    'session',
-    'public',
-  ]).default('personal'),
-  scopeKey: z.string().min(1).default('self'),
-  kind: z.enum(MEMORY_KINDS),
-  title: z.string().min(1),
-  content: z.string().min(1),
-  summary: z.string(),
-  tags: z.array(z.string()),
-  importance: z.number().min(0).max(1),
-  confidence: z.number().min(0).max(1),
-  sensitivity: z.enum([
-    'normal',
-    'sensitive',
-    'credential',
-  ]).default('normal'),
-  sourceAuthority: z.enum([
-    'direct_user',
-    'user_confirmed',
-    'assistant_inference',
-    'imported',
-    'legacy_unknown',
-  ]).default('legacy_unknown'),
-  negated: z.boolean().default(false),
-  status: memoryStatusSchema,
-  source: z.string().min(1),
-  sourceRef: z.string().nullable(),
-  occurredAt: nullableIsoDateSchema,
-  validFrom: nullableIsoDateSchema,
-  validTo: nullableIsoDateSchema,
-  createdAt: isoDateSchema,
-  updatedAt: isoDateSchema,
-  lastSeenAt: isoDateSchema,
-  lastAccessedAt: nullableIsoDateSchema,
-  accessCount: z.number().int().nonnegative(),
-  checksum: z.string().regex(/^[0-9a-f]{64}$/),
-  deletedAt: nullableIsoDateSchema,
-  origin: z.enum(['pipeline', 'api']).optional(),
-  corpusDomain: z.enum(['policy', 'open', 'chat']).optional(),
-  classification: z.enum(['public', 'internal', 'confidential']).optional(),
-}).strict();
-const backupRelationSchema = z.object({
-  fromMemoryId: z.string().uuid(),
-  toMemoryId: z.string().uuid(),
-  relationType: z.string().min(1),
-  createdAt: isoDateSchema,
-}).strict();
-const backupAuditSchema = z.object({
-  id: z.number().int().positive(),
-  action: z.string().min(1),
-  memoryId: z.string().uuid().nullable(),
-  userId: z.string().min(1),
-  detail: z.record(z.unknown()),
-  createdAt: isoDateSchema,
-}).strict();
-const backupIdempotencyKeySchema = z.object({
-  userId: z.string().min(1),
-  namespace: z.string().min(1),
-  scopeType: z.string().min(1).optional(),
-  scopeKey: z.string().min(1).optional(),
-  key: z.string().min(1),
-  memoryId: z.string().uuid(),
-  createdAt: isoDateSchema,
-}).strict();
-const backupScalarSchema = z.union([
-  z.string(),
-  z.number(),
-  z.null(),
-]);
-const backupRowSchema = z.record(backupScalarSchema);
-const fullBackupStateSchema = z.object({
-  sessions: z.array(backupRowSchema),
-  turns: z.array(backupRowSchema),
-  extractionRuns: z.array(backupRowSchema),
-  candidates: z.array(backupRowSchema),
-  actionRequests: z.array(backupRowSchema).default([]),
-  candidateResolutionRuns: z.array(backupRowSchema).default([]),
-  items: z.array(backupRowSchema),
-  versions: z.array(backupRowSchema),
-  evidence: z.array(backupRowSchema),
-  edges: z.array(backupRowSchema),
-  events: z.array(backupRowSchema),
-  outbox: z.array(backupRowSchema),
-  jobs: z.array(backupRowSchema),
-  deadLetters: z.array(backupRowSchema),
-  retentionPolicies: z.array(backupRowSchema),
-  tombstones: z.array(backupRowSchema),
-  consolidations: z.array(backupRowSchema),
-  consolidationSources: z.array(backupRowSchema),
-  consolidationSentences: z.array(backupRowSchema),
-  sentenceSources: z.array(backupRowSchema),
-  purgeJobs: z.array(backupRowSchema),
-  namespaceQualitySnapshots: z.array(backupRowSchema).default([]),
-  namespaceRolloutState: z.array(backupRowSchema).default([]),
-  namespaceRecallShadowComparisons:
-    z.array(backupRowSchema).default([]),
-  turnIngestOrder: z.array(backupRowSchema).default([]),
-  reflectionSettings: z.array(backupRowSchema).default([]),
-  reflectionCheckpoints: z.array(backupRowSchema).default([]),
-  reflectionRuns: z.array(backupRowSchema).default([]),
-  reflectionRunTurns: z.array(backupRowSchema).default([]),
-  reflectionModelCalls: z.array(backupRowSchema).default([]),
-  reflectionClaims: z.array(backupRowSchema).default([]),
-  reflectionEvents: z.array(backupRowSchema).default([]),
-  candidateEvidence: z.array(backupRowSchema).default([]),
-  episodes: z.array(backupRowSchema).default([]),
-  episodeTurns: z.array(backupRowSchema).default([]),
-  patternObservations: z.array(backupRowSchema).default([]),
-  hierarchicalSummaries: z.array(backupRowSchema).default([]),
-  hierarchicalSummarySources: z.array(backupRowSchema).default([]),
-}).strict();
-const memoryBackupSchema = z.object({
-  version: z.union([z.literal(2), z.literal(3)]),
-  schemaVersion: z.number().int().min(9).max(SCHEMA_VERSION).optional(),
-  exportedAt: isoDateSchema,
-  userId: z.string().min(1),
-  memories: z.array(backupMemorySchema),
-  relations: z.array(backupRelationSchema),
-  auditLog: z.array(backupAuditSchema),
-  idempotencyKeys: z.array(backupIdempotencyKeySchema),
-  state: fullBackupStateSchema.optional(),
-}).strict().superRefine((backup, context) => {
-  if (
-    backup.version === 3 &&
-    (!backup.schemaVersion || !backup.state)
-  ) {
-    context.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: 'v3 备份缺少 schemaVersion 或完整 state',
-    });
-  }
-  if (
-    backup.version === 2 &&
-    (backup.schemaVersion !== undefined || backup.state !== undefined)
-  ) {
-    context.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: 'v2 备份不能包含 v3 状态字段',
-    });
-  }
-});
-
-export type MemoryBackup = z.infer<typeof memoryBackupSchema>;
-type FullBackupState = z.infer<typeof fullBackupStateSchema>;
+import {
+  DENSE_GENERATION_PROBE,
+  memoryBackupSchema,
+} from './memory-store-schemas.js';
+import type {
+  FullBackupState,
+  MemoryBackup,
+} from './memory-store-schemas.js';
+import type {
+  DatabaseRow,
+  DenseBackfillResult,
+  DenseIncrementalIndexOptions,
+  DenseIndexEvaluationReport,
+  DenseIndexMemory,
+  DenseIndexWatermark,
+  ForgetTransactionAuthorization,
+  IndexedRecallCandidate,
+  IndexedRecallSearch,
+  MemoryEvidenceDigest,
+  ObserveMemoryInput,
+  QueryVariant,
+  ReliableRecallOptions,
+  RestoreAssessmentSnapshot,
+  RestoreDecisionResult,
+  RestoreMemoryInput,
+  RetrievalCandidateDecision,
+  TemporalCandidateSignal,
+  TemporalRetrievalKind,
+  TemporalRetrievalPlan,
+  TombstoneWriteAuthorization,
+} from './memory-store-types.js';
+export type { MemoryBackup } from './memory-store-schemas.js';
+export type {
+  DenseBackfillResult,
+  DenseIncrementalIndexOptions,
+  DenseIndexEvaluationCaseResult,
+  DenseIndexEvaluationReport,
+  DenseIndexTelemetry,
+  DenseIndexWatermark,
+  ForgetTransactionAuthorization,
+  ObserveMemoryInput,
+  ReliableRecallOptions,
+  RestoreAssessmentSnapshot,
+  RestoreDecisionResult,
+  RestoreMemoryInput,
+  TombstoneWriteAuthorization,
+} from './memory-store-types.js';
 
 function now(): string {
   return new Date().toISOString();

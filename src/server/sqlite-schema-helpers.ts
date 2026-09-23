@@ -19,3 +19,13 @@ export function hasColumn(
 export function quoteIdentifier(identifier: string): string {
   return `"${identifier.replaceAll('"', '""')}"`;
 }
+
+export function addColumnIfMissing(
+  database: DatabaseSync,
+  table: string,
+  column: string,
+  statement: string,
+): void {
+  if (hasColumn(database, table, column)) return;
+  database.exec(statement);
+}

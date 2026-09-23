@@ -15,7 +15,7 @@ outbox，不再保存另一套权威聊天历史。新客户端使用 Conversati
 AIRI / 宝豆 / 其他客户端
         │ 单条新消息 + Bearer 身份
         ▼
-Conversation API（schema 36 引入，当前 schema 39）
+Conversation API（schema 36 引入，当前 schema 44）
   ├─ 会话/消息/round/change feed 权威账本
   ├─ HMAC cursor、幂等、租约、SSE 重放与删除屏障
   ├─ 安全句级流式清洗：正文 / ACT / memory claim 分层
@@ -49,7 +49,7 @@ round。用户消息、round 和 `turn.accepted` 同事务；助手消息、acti
 
 ## 分层数据
 
-当前 schema 39 使用 L0–L4 五层，而不是把“有没有晋升为事实”当作是否记住：
+当前 schema 44 使用 L0–L4 五层，而不是把“有没有晋升为事实”当作是否记住：
 
 | 层 | 权威载体 | 作用 | 模型失败时 |
 |---|---|---|---|

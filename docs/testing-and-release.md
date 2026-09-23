@@ -192,11 +192,11 @@ npm run evaluate:explicit-correction-quality
 - retrieval log consecutiveFailures 0。
 - Memory Doctor 无 critical。
 
-## 9.1 schema 36 引入、当前 schema 39 沿用的 Conversation 权威门禁
+## 9.1 schema 36 引入、当前 schema 44 沿用的 Conversation 权威门禁
 
 ### 不依赖真实模型的 P0 契约
 
-- 空库和 schema 31→39 迁移都到达 39；污染 assistant 历史必须阻断迁移。
+- 空库和 schema 31→44 迁移都到达 44；污染 assistant 历史必须阻断迁移。
 - 两个真实 principal 的 persona、project、conversation、message、round、event、change、
   delete 和 import 均严格隔离，越权资源统一 404。
 - create/message/regenerate/delete/import 的幂等键同 payload 重放原结果，不同 payload
@@ -271,7 +271,7 @@ npm run prepare:airi-acceptance
 进入公开仓库或普通日志。未设置变量时仍使用系统临时目录，仅适合一次性开发验收。
 
 旧 [schema 28 验收报告](acceptance-report-p0-p1.md) 只证明当时 AIRI 0.11.3、
-旧 schema 和旧固定集，不得替代当前 schema 39 的发布结论。
+旧 schema 和旧固定集，不得替代当前 schema 44 的发布结论。
 
 ## 11. 何时必须重验
 

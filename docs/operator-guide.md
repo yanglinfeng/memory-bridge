@@ -173,15 +173,17 @@ npm run evaluate:dense
 5. 启动服务，让数据库迁移在单写者下完成。
 6. 检查 `/api/system-health`、schema attestation、Dense 水位和日志健康。
 
-当前 schema 为 39。schema 26 的身份不可变 attestation 会在后续迁移前验证；
+当前 schema 为 44。schema 26 的身份不可变 attestation 会在后续迁移前验证；
 schema 27 增加检索可观测性，schema 28 将 persona binding 唯一性收紧到
 principal，schema 30 增加双 pipeline 历史重提炼、不可变 turn 清单、模型预算
 账本、语义 claim 和事件链；schema 31 固化 ingest session 归属并增加 session
 增量索引与 candidate evidence scope attestation；schema 32–36 引入 Conversation
 权威服务，schema 37 增加 L1 情景、L2 observation 和 L4 层级摘要；schema 38 增加
 任务积压合并、终态反思任务收口和可逆 Episode 热索引精炼；schema 39 收紧
-正式记忆证据的 principal、namespace 与 scope 绑定。不得手工跳过、伪造迁移
-记录或只修改 `user_version`。
+正式记忆证据的 principal、namespace 与 scope 绑定；schema 40–44 增加内容出生通道
+（`memories.origin`）、可信会话签发（`trusted_sessions`，部门级隔离）、语料域
+（`memories.corpus_domain`）、密级与幂等键 scope 维度、公开 scope 通道。不得手工
+跳过、伪造迁移记录或只修改 `user_version`。
 
 ## 8. 检索日志配置
 
@@ -309,5 +311,5 @@ npm run evaluate:context-reflection -- \
 功能/安全门槛和目标环境延迟门槛必须分开记录，任何一项失败都不能写成“全部通过”。
 
 schema 31 的 2026-08-11 结果只保留为历史基线。schema 37 分层情景报告仍是内容质量
-基线；当前 schema 39 还必须同时通过任务收口、冷热精炼、升级迁移、完整回归和
+基线；当前 schema 44 还必须同时通过任务收口、冷热精炼、升级迁移、完整回归和
 大库完整性验证。任一门禁未完成时不得用历史 627/627 或旧桌面证据替代。

@@ -37,7 +37,7 @@ flowchart LR
   Lifecycle --> Store
   Lifecycle --> Journal["LifecycleStore / Journal"]
   Admin --> Store
-  Conversation --> SQLite[("SQLite schema 39")]
+  Conversation --> SQLite[("SQLite schema 44")]
   Store --> SQLite
   Journal --> SQLite
   Worker["MemoryWorker"] --> SQLite
@@ -100,7 +100,7 @@ sequenceDiagram
   participant E as ConversationChatEngine
   participant L as 记忆生命周期
   participant O as Ollama
-  participant D as SQLite schema 39
+  participant D as SQLite schema 44
 
   C->>H: conversationId + clientMessageId + 本轮 text
   H->>S: Bearer principal + 严格请求字段
@@ -120,7 +120,7 @@ sequenceDiagram
   H-->>C: assistant.action / turn.completed
 ```
 
-`ConversationService` 在 schema 36 引入，当前运行于 schema 39，是会话状态机和事务边界；
+`ConversationService` 在 schema 36 引入，当前运行于 schema 44，是会话状态机和事务边界；
 HTTP handler 不直接拼业务
 SQL。相同 `clientMessageId` + 相同 payload 重放已有 round，不重复调用模型；同 ID 异
 payload 冲突。同会话 partial unique index 保证最多一个非终态 round。
@@ -342,7 +342,7 @@ owner/namespace。当前 scope/generation 的到期索引任务清空后，队�
 
 ## 12. 数据库迁移与 attestation
 
-当前 `SCHEMA_VERSION = 39`：
+当前 `SCHEMA_VERSION = 44`：
 
 - v26：可信 session/project 绑定、身份列不可变触发器和迁移 ledger。
 - v27：retrieval trace、事件、反馈难例和日志健康。
@@ -361,6 +361,18 @@ owner/namespace。当前 scope/generation 的到期索引任务清空后，队�
 - v39：38→39 先生成迁移备份并保留全部 evidence，再安装
   `memory_evidence_owner_insert` 与 `memory_evidence_identity_update`。启动会校验
   规范触发器 SQL、重装同名削弱触发器并扫描污染 evidence；已污染数据库 fail closed。
+- v40：`memories.origin` 标记内容出生通道（`pipeline` 内核管线 / `api` 认证 API 直写）；
+  存量行与备份导入一律落 `pipeline`，从严。
+- v41：新建 `trusted_sessions`（服务对服务的可信会话签发）与
+  `trusted_sessions_principal_idx`；scope 签发即冻结，吊销只置 `revoked_at`。
+- v42：`memories.corpus_domain` 标注语料域（`policy`/`open`/`chat`），重排时逐候选按域
+  取相关性门槛；`NULL` 走全局默认。
+- v43：多租户可见性模型 v2——`idempotency_keys` 按"建新表→拷数据→换名"补 `scope`
+  维度，新增 `memories.classification`（密级，默认 `internal`）与
+  `trusted_sessions.clearance`。
+- v44：`scope_type` 的 CHECK 枚举补 `public`，支撑 App/小程序匿名只读的公开通道。
+- 迁移惯例：v40 起的每个版本块开头都会无条件 DROP 全部会话触发器，因此**必须**
+  重装 v32/v33/v35/v36 四组结构化触发器，否则升级库会因触发器缺失而断言失败。
 
 打开更高版本数据库会拒绝降级运行。迁移在事务内执行，并在需要时生成迁移前
 SQLite 备份；v26 关键结构还会验证列、索引、触发器 SQL 和 ledger，不能靠
@@ -384,7 +396,9 @@ SQLite 备份；v26 关键结构还会验证列、索引、触发器 SQL 和 led
 | 文件 | 责任 |
 |---|---|
 | `src/server/index.ts` | 依赖装配、启动、Worker 和安全关闭 |
+| `src/server/config.ts` | 运行时配置的事实源：环境变量、默认值、弃答档位与语料域门槛 |
 | `src/server/http-server.ts` | HTTP、静态前端和 AIRI 路由 |
+| `src/server/mcp-server.ts` | MCP 工具定义与调用编排（对外首选接口） |
 | `src/server/conversation-http.ts` | Conversation 严格 HTTP/SSE 契约和稳定错误 |
 | `src/server/conversation-service.ts` | 会话、消息、round、change、删除、导入和 Doctor |
 | `src/server/conversation-chat.ts` | beforeModel、provider 流式、完成/失败事务和审计 |
@@ -398,6 +412,10 @@ SQLite 备份；v26 关键结构还会验证列、索引、触发器 SQL 和 led
 | `src/server/contextual-query-understanding.ts` | 回答前上下文依赖检测、结构化消歧和安全校验 |
 | `src/server/memory-reflection.ts` | 双 pipeline 选窗、run、预算、候选证据和 checkpoint |
 | `src/server/retrieval-observability.ts` | trace、JSONL 和日志健康 |
+| `src/server/episodic-memory-service.ts` | L1 情景物化、L2 观察与 L4 摘要的编排 |
+| `src/server/hierarchical-summary-service.ts` | session/day/week 层级摘要的生成、来源绑定与失效 |
+| `src/server/answer-tools.ts` | 答案工具（calculator / date_diff / date_shift）与弃答联动 |
+| `src/server/trusted-sessions.ts` | 可信会话签发、授权矩阵解析、密级与部门级隔离判定 |
 | `src/server/database.ts` | schema、迁移、触发器规范 attestation 和 evidence 完整性扫描 |
 
 ## 15. 不应误解的边界

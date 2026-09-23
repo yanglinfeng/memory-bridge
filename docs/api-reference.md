@@ -54,6 +54,8 @@ Conversation API 的错误统一为：
 | GET/POST | `/api/identity/credentials` | 列出/签发凭据 |
 | POST | `/api/identity/credentials/:id/revoke` | 撤销凭据 |
 | GET | `/api/identity/personas` | 当前账户 persona 列表 |
+| POST | `/api/sessions` | 签发可信会话（部门级隔离，需配置授权矩阵） |
+| GET/DELETE | `/api/sessions/:id` | 查询/吊销可信会话 |
 
 `GET /api/health` 是唯一不要求身份凭据的 `/api/*` 请求，固定只返回
 `ok`、`service`、`version` 和 `mcpTransport`。其他方法、`/api/health/`
@@ -77,6 +79,18 @@ Conversation API 的错误统一为：
 | GET | `/api/conversations/changes` | 可直接应用的增量同步 |
 | POST | `/api/conversations/import` | AIRI 历史 dry-run/commit 导入 |
 | GET | `/api/conversations/doctor` | 会话、导入、删除与任务体检 |
+| POST | `/api/chat-workspace/bootstrap` | 管理台本地聊天工作台一次性引导（persona/会话/项目默认值），未配置时 503 |
+
+### 答案工具
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| GET | `/api/tools` | 列出已注册的答案工具与参数说明，供调用方动态暴露给生成模型 |
+| POST | `/api/tools/:name/invoke` | 调用指定工具；body 为参数对象，纯确定性计算、无副作用、不触库 |
+
+当前注册：`calculator`（`expression`）、`date_diff`（`from`、`to`）、`date_shift`
+（`date`、`days`）。工具结果用 200 返回 `ok:true`；参数或表达式非法时返回 400 与
+结构化 `result`，不抛异常。
 
 ### 记忆与治理
 
@@ -446,6 +460,32 @@ session；fork 只能继承原绑定，不能在请求体中重新指定另一�
 健康接口按当前 principal 隔离业务队列和记忆索引；稳定全局
 `consolidation_sweep` 会作为系统治理链参与健康计算，但不能暴露其他账户的
 业务记忆、trace 或候选内容。
+
+### 11.3 可信会话签发与吊销
+
+服务对服务路径用「签发一次、复用多次」的可信会话替代在请求里传身份字段。授权
+矩阵来自 `MEMORY_BRIDGE_SESSION_GRANTS_FILE`（见[配置参考](configuration-reference.md)）；
+**矩阵未配置时该接口整体返回 503（失败关闭）**，不是放行。
+
+`POST /api/sessions`
+
+```jsonc
+{
+  "scopes": [ { "scopeType": "project", "scopeKey": "dept-finance" } ],
+  "ttlSeconds": 3600,
+  "clearance": "internal"   // 缺省 internal；只接受 public/internal/confidential
+}
+```
+
+- 可签发 `scopeType`：`project`、`role`、`public`（`personal/self` 恒允许，不需矩阵）。
+- 成功返回 **201** 与会话记录（含 `sessionId`、签发时间、过期时间、`clearance`）。
+- 逐项校验矩阵：主体未配置任何 scope → 403；申请未授予的 scope → 403；
+  `clearance` 非法 → 400；非法 scope 结构 → 400。
+- scope 绑定**签发后冻结**；请求体与查询串中的 `userId`/`principalId` 一律被拒绝。
+
+`GET /api/sessions/:sessionId` 返回该会话记录；`DELETE /api/sessions/:sessionId`
+吊销（置 `revoked_at`，不物理删除）。两者都只对**签发它的同一个 principal** 生效，
+其他 principal 一律 404，避免探测他人会话是否存在。
 
 ## 12. 候选、动作与治理接口
 
@@ -899,3 +939,30 @@ reflection/reextract run。
 principal 作用域下的 namespace、conversation/round/request/attempt ID、模型、稳定
 错误码、总耗时、召回耗时、provider 耗时和首 token 耗时，不记录用户/助手正文、
 Prompt、记忆上下文、Token 或 provider 原始 wire。
+
+## 17. 答案工具接口
+
+答案工具是**纯确定性计算**，不读库、不写库、不调用模型，因此可以放心暴露给生成
+模型使用；它解决的是"检索对了但算错了"这一类失败（日期算术、数值换算）。
+
+`GET /api/tools` 返回 `{ tools: [{ name, title, description, params }] }`，`params`
+里带每个参数的名称、类型与说明，可直接转成模型可用的工具声明。当前注册三个：
+
+| 工具 | 参数 | 用途 |
+|---|---|---|
+| `calculator` | `expression` | 四则与括号表达式求值 |
+| `date_diff` | `from`、`to` | 两个日期之间的天数差 |
+| `date_shift` | `date`、`days` | 在某个日期上加减天数（"三天前是几号"） |
+
+`POST /api/tools/:name/invoke`，body 直接是参数对象：
+
+```bash
+curl -sS http://127.0.0.1:3789/api/tools/date_shift/invoke \
+  -H "Authorization: Bearer $MEMORY_BRIDGE_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"date":"2026-09-23","days":-3}'
+```
+
+成功返回 200 与 `{ ok:true, ... }`；工具名不存在、参数缺失或表达式非法时返回 400
+与结构化 `result`（含错误说明）——**调用永不抛异常**，因此调用方不需要为它做
+异常兜底。工具结果会带耗时字段，便于与召回延迟一起观测。

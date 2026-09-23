@@ -251,7 +251,7 @@ stale/quarantined 摘要、超大记忆和高频零结果热点；schema 37 起�
 zero-result hotspot 是 info 信号；负例测试和隔离测试本来就会产生零结果，不应
 看到 count 就批量放宽召回门槛。
 
-schema 36 引入、当前 schema 39 沿用只读 Conversation Doctor：
+schema 36 引入、当前 schema 44 沿用只读 Conversation Doctor：
 
 ```bash
 curl -sS http://127.0.0.1:3789/api/conversations/doctor \

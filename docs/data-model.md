@@ -1,8 +1,10 @@
 # 数据模型与存储
 
-本文描述当前 schema 39 的逻辑数据模型。Conversation 权威表在 schema 32–36
+本文描述当前 schema 44 的逻辑数据模型。Conversation 权威表在 schema 32–36
 逐步引入，schema 37 增加分层情景记忆，schema 38 增加可逆 Episode 索引精炼，
-schema 39 加固正式 evidence 的数据库身份边界。
+schema 39 加固正式 evidence 的数据库身份边界；schema 40–44 依次引入内容出生通道
+（`memories.origin`）、可信会话签发（部门级隔离）、语料域分档（`memories.corpus_domain`）、
+多租户可见性模型 v2（密级列 + 幂等键补 scope 维度）和公开 scope 通道。
 本文不是可直接执行的迁移文件；真实结构、
 列约束和迁移顺序以 `src/server/database.ts` 为准。
 
@@ -80,6 +82,7 @@ erDiagram
 | `conversation_changes` | 跨重启增量同步 change feed | principal/namespace 序列、资源版本和 tombstone |
 | `conversation_lineage_keys` | fork/lineage 兼容键 | 保持分叉会话来源关系 |
 | `turn_tool_events` | turn 内工具事件 | 还原工具调用证据 |
+| `trusted_sessions` | 可信会话签发表（schema 41） | 服务对服务路径的部门级隔离；scope 绑定签发后不可变，吊销只置 `revoked_at`；`clearance` 为会话密级（schema 43） |
 
 ### 会话可信状态
 
@@ -111,6 +114,21 @@ erDiagram
 | `memory_events` | created/corrected/reverted/forgotten 等生命周期事件 |
 | `idempotency_keys` | 用户、namespace、key 到 memory 的幂等映射 |
 | `audit_log` | 业务操作审计 |
+
+### 记忆行上的新增列（schema 40–44）
+
+| 列 | 引入版本 | 取值与默认 |
+|---|---:|---|
+| `memories.origin` | 40 | 内容出生通道：`pipeline`（内核提取/治理管线，**默认**）或 `api`（认证 API 直写）。存量数据与备份导入一律落 `pipeline`（从严） |
+| `memories.corpus_domain` | 42 | 语料域：`policy`（制度/合同）、`open`（开放语料）、`chat`（对话记忆）；`NULL` = 未标注，走全局默认门槛。召回重排时逐候选按域查相关性门槛 |
+| `memories.classification` | 43 | 密级：`public` / `internal` / `confidential`；`NULL` 与存量行一律按 `internal`（从严，不放大可见范围） |
+| `trusted_sessions.clearance` | 43 | 会话密级，缺省 `internal` |
+| `scope_type` CHECK 枚举 | 44 | 补 `public`（可见性模型 v2 的 public 恒可见层依赖它） |
+
+`idempotency_keys` 在 schema 43 重建：唯一键补 `scope` 维度。原 `(user_id, namespace, key)`
+不含 scope，同一服务账号跨部门写同名 key 会静默去重丢数据；表级 PRIMARY KEY 无法
+`ALTER`，因此照抄"建新表 → 拷数据 → 换名"模式。存量若存在同键映射到不同 scope 的行，
+`INSERT OR IGNORE` 首行胜出——与旧行为语义一致，不放大丢失。
 
 ### 记忆类型
 
@@ -241,6 +259,11 @@ metadata 模式默认不保存原查询文本；diagnostic 模式保存经脱敏
 | 37 | 每个完整 exchange 的情景记忆、跨窗行为观察，以及 session/day/week 来源化层级摘要 |
 | 38 | 巩固/反思任务收口、Episode 冷却登记和可逆热索引精炼 |
 | 39 | 正式 evidence owner/namespace/scope 触发器、身份不可换绑和启动污染扫描 |
+| 40 | `memories.origin` 内容出生通道（pipeline/api），存量与导入一律从严落 pipeline |
+| 41 | `trusted_sessions` 可信会话签发表（服务对服务，部门级隔离）；scope 签发后冻结，吊销置 `revoked_at` |
+| 42 | `memories.corpus_domain` 语料域分档（policy/open/chat），召回重排按域取门槛 |
+| 43 | 多租户可见性模型 v2：幂等键唯一约束补 scope 维度、`memories.classification` 密级、`trusted_sessions.clearance` |
+| 44 | `scope_type` CHECK 枚举补 `public`，支撑公开通道（App/小程序匿名读） |
 
 数据库的 `PRAGMA user_version` 必须由迁移代码维护。手工修改版本号不能建立可信
 列、索引、触发器或 ledger，反而可能使服务 fail closed。
@@ -403,3 +426,23 @@ owner、namespace 以及 personal/role/project/session scope 一致。
 
 启动会核对两条触发器的规范 SQL 并扫描既有证据错配。削弱或缺失的触发器会重装，
 但已经污染的数据库会 fail closed，不能靠手工修改 `PRAGMA user_version` 洗成可信库。
+
+## 20. schema 40–44 多租户可见性与公开通道
+
+**横向（scope）× 纵向（密级）正交。** scope 决定"哪一片数据"，密级决定"这一行对谁可见"，
+两者独立判定、缺一不可。
+
+- **可信会话（schema 41 / 43）**：`trusted_sessions` 承载服务对服务路径的部门级隔离。
+  可签发 scope 类型为 `project` / `role` / `public`（部门以 `project:<部门>` 形式在授权
+  矩阵中表达）；`scopes` 签发即冻结，吊销只置 `revoked_at`，历史不删。默认上限 32 个活跃
+  会话、TTL 3600 秒（可配 60–86400）、单会话最多 16 条 scope。授权矩阵来自
+  `MEMORY_BRIDGE_SESSION_GRANTS_FILE` 指向的配置文件（主体 → scopes + clearance），
+  行级判定见 [多租户隔离设计](design/multi-tenant-isolation.md)。
+- **密级（schema 43）**：`memories.classification` ∈ `public` < `internal` < `confidential`，
+  `NULL` 一律按 `internal`（从严，不放大可见范围）。读取时只返回密级序**不高于**读者
+  `clearance` 的行；`public` 为匿名公开层，`confidential` 需会话 `clearance=confidential`。
+  密级与 `sensitivity`（内容保护语义）不是一回事，互不推导。
+- **公开通道（schema 44）**：`scope_type` 的 CHECK 枚举补 `public`，供 App/小程序匿名只读
+  场景；公开层仍然受 tombstone、来源有效性和密级过滤约束，不是"绕过可见性"。
+- **升级语义**：40–44 全部只做加法与"建新表→拷数据→换名"，不重写历史行；`PRAGMA user_version`
+  仍必须由迁移代码维护。

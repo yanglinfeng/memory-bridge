@@ -36,7 +36,9 @@ POST /api/memories
   "sourceRef": "employee-handbook.md#ch3-s2",  // 文档内定位
   "idempotencyKey": "kb:employee-handbook:ch3-s2",  // 幂等键：重复导入不产生重复条目
   "importance": 0.5,
-  "occurredAt": "2026-09-01T00:00:00Z"   // 可选：文档生效/发布时间
+  "occurredAt": "2026-09-01T00:00:00Z",  // 可选：文档生效/发布时间
+  "corpusDomain": "policy",              // 可选：语料域（见 §2.2），制度类填 policy
+  "classification": "internal"           // 可选：密级（见 §2.2），默认 internal
 }
 ```
 
@@ -66,7 +68,39 @@ POST /api/memories
 
 效果：现在查询只见新规定；**传 `timestamp` 查过去时点仍能看到旧规定**（bi-temporal，见 §4）。
 
-### 2.2 批量写入注意
+### 2.2 密级与语料域（多租户 v2，schema 42–44 起）
+
+切片入库时建议一并带上这两个字段，它们决定**这一行谁能看到**和**用多严的门槛判断它是否相关**：
+
+| 字段 | 取值 | 不传时 | 作用 |
+|---|---|---|---|
+| `classification` | `public` / `internal` / `confidential` | 按 `internal`（从严） | 纵向密级：读取只返回密级序不高于读者 `clearance` 的行 |
+| `corpusDomain` | `policy` / `open` / `chat` | 走全局默认门槛 | 横向语料域：逐候选改用该域的重排相关性门槛 |
+
+```jsonc
+{
+  "kind": "document_chunk",
+  "content": "……",
+  "source": "kb:file",
+  "idempotencyKey": "kb:employee-handbook:ch3-s2",
+  "corpusDomain": "policy",        // 制度/合同类：门槛 0.9，宁可拒答也不放行
+  "classification": "internal"     // 全员可见但需登录；机密文件用 confidential
+}
+```
+
+实际选择：
+
+- **制度、合同、规章** → `corpusDomain: "policy"`。门槛最高（默认 0.9），好处是"同话题但不是答案"的段落会被压掉，代价是召回略少。
+- **开放语料**（百科、公开文档、FAQ） → `"open"`。门槛 0.65，因为问法与正文措辞距离大，门槛太高会误杀正确依据。
+- **对话记忆** → `"chat"`。门槛 0.7。文档片段**不要**标成 `chat`。
+- **密级**：面向 App/小程序的公开内容标 `public`（配合匿名通道可读）；内部资料 `internal`；薪酬、合同、审计类标 `confidential`——只有 `clearance=confidential` 的会话能召回。
+
+**部门隔离不靠字段，靠可信会话**：同一批文档可以全员入库，读的时候由
+`trusted_sessions` 的授权矩阵决定哪个主体能读哪些 scope。签发与矩阵配置见
+[命令参考 §12](command-reference.md) 与[安全与隐私 §5.1](security-and-privacy.md)；
+`classification` 与 scope 是"与"关系，两个都通过才可见。
+
+### 2.3 批量写入注意
 
 当前每条一次同步 HTTP（含向量化），大文档导入建议**串行 + 适度间隔**；批量接口（一次多片段）在路线图中（S5），未上线。
 

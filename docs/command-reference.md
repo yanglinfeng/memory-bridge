@@ -35,6 +35,22 @@
 | `npm run soak:reliability` | 长时间多会话/Worker 稳定性 | 默认按 PRD 长跑 |
 | `npm run verify:crash-recovery` | 崩溃恢复 | 使用隔离子进程/数据 |
 | `npm run verify:storage-refinement` | 在显式数据库副本验证冷热精炼、重启和可选 VACUUM | 会修改目标库；禁止指向正式运行库 |
+| `npm run verify:reranker-quality` | 重排质量与 CE/LLM 对比 | Ollama 或 CE sidecar |
+| `npm run verify:semantic-recall` | 语义召回冒烟 | 构建后运行 |
+| `npm run verify:reflection-grammar` | 反思输出的语法/句式护栏 | 构建后运行 |
+| `npm run verify:mcp-concurrent-cold-start` | MCP 并发冷启动 | 构建后运行 |
+| `npm run qa:mcp-system` | MCP 系统级模拟 | 构建后运行 |
+| `npm run qa:pinokio-lifecycle` | Pinokio 安装/升级/停止生命周期 | 需要 `bundle/` 快照 |
+| `npm run qa:conversation-long-timeline` / `qa:natural-conversation-quality` | 长时轴与自然对话质量 | Ollama；耗时较长 |
+| `npm run test:lifecycle` | 安装/升级/诊断生命周期单测 | 不调用模型 |
+| `npm run doctor` | 本地安装体检（Node、构建产物、SQLite、模型、端口、MCP） | 只读 |
+| `npm run pretest` | 重新生成 Pinokio bundle | 由 `npm test` 自动触发，保证全新 clone 可测 |
+| `npm run kb:provision -- …` | 多租户授权签发（主体 + 令牌 + 授权矩阵） | 见第 12 节；变更类命令需 `--yes` |
+| `npm run kb:acceptance` | 多租户隔离验收（部门互不可见） | 使用隔离数据目录 |
+| `npm run repair:schema28-memory` | 修复 schema 28 时代的多用户长记忆缺陷数据 | 仅对旧库使用；先在副本上跑 |
+
+`npm test` 会先自动执行 `npm run bundle:pinokio`（bundle 是构建产物，不随仓库分发），
+因此全新 clone 直接跑测试不会因为缺 `bundle/` 而失败。
 
 ## 2. 安装、构建和启动
 
@@ -283,3 +299,33 @@ curl -sS "$BASE/api/reflection/runs/$RUN_ID" \
 预览和排队示例见[HTTP API 第 14 节](api-reference.md#14-上下文理解与历史重提炼接口)。
 不要让脚本或 curl 指向正式数据目录；模型评测器会自行创建临时隔离 SQLite，
 回执只写到显式 `--receipt` 路径。
+
+## 12. 多租户接入与授权
+
+`kb:provision` 一次把「主体 + 令牌 + 授权矩阵」三件事配好，避免手改 JSON 出错；
+它复用内核真实实现（`IdentityService` 与 `trusted-sessions` 校验器），因此规则与
+运行时完全一致。变更类命令必须显式 `--yes`。
+
+```bash
+npm run kb:provision -- check  --spec FILE                 # 只校验 spec，不碰文件
+npm run kb:provision -- plan   --spec FILE [--data-dir DIR] # 只读库并预演
+npm run kb:provision -- apply  --spec FILE [--data-dir DIR] [--token-out FILE] [--replace] [--rotate] --yes
+npm run kb:provision -- matrix --spec FILE [--out FILE] [--replace] --yes
+npm run kb:provision -- token  --principal ID --label LABEL [--expires-at ISO] [--token-out FILE] --yes
+npm run kb:provision -- list   [--data-dir DIR]             # 列出主体
+npm run kb:provision -- sessions --principal ID [--all]     # 查看该主体已签发的可信会话
+npm run kb:provision -- revoke --principal ID --credential CID [--reason TEXT] --yes
+```
+
+要点：
+
+- `--data-dir DIR` 等价于使用 `DIR/memory-bridge.sqlite3`，并把授权矩阵写到
+  `DIR/session-scope-grants.json`（与运行时的默认位置一致）。
+- `apply` 的顺序是「备份旧矩阵 → 写矩阵 → 建主体 → 签发令牌」，**幂等**：同 label
+  已有活跃凭据则跳过；要强制换新加 `--rotate`。`--replace` 用 spec 完全覆盖矩阵
+  （丢弃 spec 之外的主体），默认是合并。
+- **令牌只在签发当次输出一次**，服务端只存哈希；丢了只能重签。
+- ⚠️ 一旦存在任何凭据，「匿名 loopback 放行」永久失效——所有 `/api` 调用都必须带
+  `Authorization`。**先把客户端改好再 `apply`**，否则会把自己锁在门外。
+- 隔离是否真的成立，用 `npm run kb:acceptance` 跑部门互不可见验收，不要只看接口
+  返回 200。

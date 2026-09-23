@@ -80,6 +80,29 @@ principal 是强安全边界；namespace、persona、project、session 是 princ
 用户自定义 headers 中与 AIRI 保留身份头同名的字段会被剥离或覆盖，不能伪造
 另一 persona、session 或 project。
 
+### 5.1 部门隔离与密级（schema 41/43/44）
+
+横向 **scope** 与纵向 **密级** 正交：scope 决定"哪一片数据"，密级决定"这一行对谁可见"，
+两者独立判定。
+
+- **可信会话签发**：`trusted_sessions` 承载服务对服务的部门级隔离。可签发 scope 类型为
+  `project` / `role` / `public`，部门以 `project:<部门>` 形式表达。scope 绑定**签发即冻结**，
+  吊销只置 `revoked_at`（历史可审计，不物理删除）。默认上限 32 个活跃会话，
+  TTL 3600 秒（可配 60–86400），单会话最多 16 条 scope。
+- **授权矩阵**：由 `MEMORY_BRIDGE_SESSION_GRANTS_FILE` 指向的配置文件声明
+  「主体 → scopes + clearance」。签发密级不得高于该主体被授权的密级。矩阵**按文件
+  mtime 热加载**，改动即刻生效；矩阵条目形如 `project:dept-finance`，裸 `public`
+  等价 `public:public`。`personal/self` 恒允许，不经过矩阵。
+- **密级过滤**：`memories.classification` ∈ `public` < `internal` < `confidential`，
+  与 `sensitivity`（内容保护语义）无关。读取只返回密级序**不高于**读者 `clearance` 的行；
+  `NULL` 与存量行一律按 `internal`（从严，不放大可见范围）。共享作用域内还会叠加
+  密级过滤（`classification ≤ clearance`），与 scope 判定是"与"关系。
+- **公开通道**：schema 44 为 `scope_type` 补 `public`，用于 App/小程序匿名只读；匿名读
+  仍然受 tombstone、来源有效性和密级过滤约束，不是绕过可见性的后门。
+- **失败一律 fail closed**：矩阵文件缺失或解析失败时可信会话功能整体关闭；主体未配置
+  任何 scope、`clearance` 非法或申请了未授予的 scope 时，签发**抛错拒绝**（403），
+  不会降级为宽松放行。
+
 ## 6. 记忆内容安全
 
 - `credential` sensitivity 的内容拒绝保存为长期记忆。
@@ -234,6 +257,8 @@ TLS、反向代理鉴权、审计、限流、主机隔离和安全测试，并�
 - [ ] 生产使用 retrieval `metadata`。
 - [ ] 已验证 Alice/Bob 负向越权测试。
 - [ ] project/session fork 和不可变绑定测试通过。
+- [ ] `MEMORY_BRIDGE_SESSION_GRANTS_FILE` 指向的矩阵与真实组织架构一致；未授权主体签发会话返回 403，`personal/self` 之外的 scope 都在矩阵内。
+- [ ] 密级抽查：`confidential` 记忆对 `clearance=internal` 的会话不可见；`internal` 对 `clearance=public` 不可见；`public` 可匿名读取但仍受 tombstone 与来源有效性约束。
 - [ ] schema 39 两条 evidence 触发器 attestation 通过，owner/namespace/scope 污染行是 0。
 - [ ] 跨账户、跨 namespace/scope 插入和 version/turn 换绑负例都被数据库拒绝。
 - [ ] Conversation HMAC cursor、同会话 single-flight、断线恢复和晚到 completion 门禁通过。
@@ -253,7 +278,8 @@ TLS、反向代理鉴权、审计、限流、主机隔离和安全测试，并�
 4. 导出受影响账户的只读诊断和一致性备份。
 5. 用两个独立 Token 重放正向/负向隔离测试。
 6. 检查 session 绑定、scope、v26 attestation、v28 persona binding、v39 evidence
-   trigger attestation 和污染扫描。
+   trigger attestation 和污染扫描，以及 v41 `trusted_sessions` 的签发记录
+   （`revoked_at` 是否被误清）和 v43 密级列的分布是否符合预期。
 7. 确认根因和影响范围后再恢复服务或执行数据治理。
 
 具体命令见[故障排查](troubleshooting.md)和[日志查看](logging-guide.md)。

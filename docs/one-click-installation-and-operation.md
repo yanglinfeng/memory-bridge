@@ -251,6 +251,6 @@ memory-bridge/state/receipts/
   正式开源发布时建立。
 - 当前 AIRI 0.11.x 走兼容 Base URL；服务端 Conversation API 已有，但 AIRI 客户端
   尚未完成单一权威切换。
-- 当前 schema 39 没有在本轮重新做真实 AIRI 桌面 UI 全闭环，因此发布前仍要按
-  [AIRI 接入与验收](airi-integration.md)在目标 AIRI 版本上跑一次真机验收。
+- 当前没有在真实客户端上重跑完整 UI 全闭环，因此发布前仍要按
+  [AIRI 接入与验收](airi-integration.md)在目标客户端版本上跑一次真机验收。
 - 本地 14B 模型适合低成本开发，但质量和速度仍取决于硬件、模型和数据规模。

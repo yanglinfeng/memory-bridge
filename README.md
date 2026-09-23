@@ -4,6 +4,8 @@
 
 **带证据引用与审计的本地优先知识库引擎，同时是不绑定任何客户端的 MCP 记忆中间件。**
 
+[简体中文](README.md) · [English](README.en.md)
+
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](./LICENSE)
 ![Node](https://img.shields.io/badge/node-%E2%89%A524-green)
 ![Schema](https://img.shields.io/badge/schema-v44-blue)
@@ -109,7 +111,7 @@ npm start          # HTTP 服务 + 管理台：http://127.0.0.1:3789
 - [ ] `BENCHMARKS.md`：公开基准的完整条件与一键复现脚本
 - [ ] `CHANGELOG.md` / `CONTRIBUTING.md` / `SECURITY.md` 社区四件套
 - [ ] `supersede` 时补写 `valid_to`，并补 as-of 查询的回归测试
-- [ ] 英文文档（`README.en.md` 与核心指南）
+- [x] 英文入口 `README.en.md`（核心指南英文版仍待补）
 - [ ] 文档解析深度：推荐接入 RAGFlow / Docling 等上游，忆桥专注其上的可信层
 
 ## License

@@ -49,7 +49,7 @@ stdio。首次启动为空数据，不包含演示记忆。
 |---|---|
 | [架构与记忆模型](architecture.md) | 产品级分层记忆模型和关键边界 |
 | [技术实现](technical-reference.md) | 兼容/Conversation 请求链、后台任务、一致性和失败语义 |
-| [数据模型](data-model.md) | schema 40 会话/分层记忆表组、实体关系、版本、证据、冷热精炼、删除和导入 |
+| [数据模型](data-model.md) | schema 44 会话/分层记忆/多租户表组、实体关系、版本、证据、可见性与密级、冷热精炼、删除和导入 |
 | [开发指南](developer-guide.md) | 代码入口、扩展点、约束和变更验证方式 |
 | [测试与发布](testing-and-release.md) | 门禁层级、模型评测、真实 AIRI 验收和重验触发器 |
 | [schema 37 分层记忆验收报告](acceptance-report-schema37-layered-memory.md) | L0–L4、自然对话质量、80K 长时间轴、回归、性能和回执证据 |
@@ -64,6 +64,15 @@ stdio。首次启动为空数据，不包含演示记忆。
 | [分层情景记忆 P0/P1 PRD](prd-layered-episodic-memory-p0-p1.md) | schema 37 L0–L4、统一召回、观察晋升、摘要、性能和完成定义 |
 | [完整产品 PRD](prd-airi-memory-system.md) | 全量产品目标、需求、数据和质量约束 |
 
+## 设计文档（面向当前实现）
+
+| 文档 | 内容 |
+|---|---|
+| [多租户隔离与可信会话](design/multi-tenant-isolation.md) | trusted_sessions 签发、授权矩阵、写读同源闸门、部门互不可见与失败关闭语义 |
+| [答案工具与弃答调参](design/answer-tools-and-abstention-tuning.md) | calculator / date_diff / date_shift 框架，以及 strict / balanced / eager 三档的调参循环 |
+
+英文入口见仓库根目录 [`README.en.md`](../README.en.md)；核心指南的英文版仍在 Roadmap 上。
+
 ## 文档使用约定
 
 - 配置默认值以 `src/server/config.ts` 为最终事实源。
@@ -72,18 +81,20 @@ stdio。首次启动为空数据，不包含演示记忆。
 - 数据库当前版本以 `src/server/database.ts` 中的 `SCHEMA_VERSION` 为准。
 - 验收报告是带日期和环境的证据快照，不应被理解为任何未来模型、AIRI
   版本或 schema 都自动通过。
+- PRD 与验收报告是**历史文档**：里面写的「当前 schema」「60/627」等数字都是写作
+  当时的快照，不要拿它们当作今天的行为说明；今天的行为以本节上方列出的手册为准。
 - 文档中的 Token、账户 ID、traceId 和 memoryId 都是占位符；不要把真实
   Token、私人记忆、诊断导出或备份提交到 Git。
 
 ## 当前文档快照
 
-- 文档刷新日期：2026-09-16。
-- 源码 schema：44（v41 引入 `trusted_sessions` 表：可信会话签发与部门级隔离）。
+- 文档刷新日期：2026-09-23。
+- 源码 schema：44（v40 内容出生通道 `memories.origin`；v41 `trusted_sessions` 可信会话签发与部门级隔离；v42 语料域 `memories.corpus_domain`；v43 密级列与幂等键 scope 维度；v44 `public` scope 公开通道）。
 - 默认模型：`qwen2.5:14b`；默认 embedding：`bge-m3:latest`。
 - 默认 HTTP：`http://127.0.0.1:3789`。
 - 默认自动化模式：`shadow`。
 - 默认历史重提炼模式：`shadow`；跨多轮 inference 永不自动提交。
-- 当前 schema 41 继承的存储精炼基线证据见
+- 当前 schema 44 继承的存储精炼基线证据见
   [schema 38 存储精炼验收报告](acceptance-report-schema38-storage-refinement.md)；内容质量
   仍以 [schema 37 分层记忆验收报告](acceptance-report-schema37-layered-memory.md) 为基线。
   历史 schema 31/30/28 的数字只作为旧基线，不能替代当前代码的完整回归、自然对话

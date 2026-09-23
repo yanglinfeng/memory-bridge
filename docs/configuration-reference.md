@@ -26,6 +26,8 @@
 | `MEMORY_BRIDGE_MCP_PERSONA_ID` | 未设置 | AIRI 稳定 ID | 与 SESSION_ID 同时设置时绑定 `role/{persona}` |
 | `MEMORY_BRIDGE_MCP_PROJECT_ID` | 未设置 | AIRI 稳定 ID | 完整 persona/session 身份下可选绑定 `project/{project}` |
 | `MEMORY_BRIDGE_MCP_SESSION_ID` | 未设置 | AIRI 稳定 ID | 与 PERSONA_ID 同时设置时绑定 `session/{session}` |
+| `MEMORY_BRIDGE_SESSION_GRANTS_FILE` | `<dataDir>/session-scope-grants.json` | 文件路径 | 可信会话授权矩阵（主体 → 可签发 scope + clearance）。**文件不存在 = 功能关闭**：签发返回 403、写读同源闸门不生效（零回归）。按 mtime 热加载，改完即生效 |
+| `MEMORY_BRIDGE_ANONYMOUS_MODE` | `off` | `off`、`public-readonly` | 匿名公开读通道。`off` 时无令牌请求一律 401；`public-readonly` 时 loopback 上无令牌请求映射为虚拟主体 `@anonymous`，**仅允许召回**，且只可见 public scope + `public` 密级文档 |
 
 MCP 必须设置 `MEMORY_BRIDGE_USER_ID` 或 `MEMORY_BRIDGE_MCP_TOKEN` 之一。Token
 方式会校验凭据并绑定 principal；USER_ID 方式是本机受信任启动配置。连接同时
@@ -90,6 +92,46 @@ AIRI-compatible HTTP 探针和真实 AIRI 桌面闭环。
 | `MEMORY_BRIDGE_SEMANTIC_TIMEOUT_MS` | 120000 | 1000–600000 | 单次语义模型调用超时 |
 | `MEMORY_BRIDGE_SEMANTIC_CACHE_TTL_MS` | 30000 | 1000–600000 | rewrite/rerank 成功结果的进程内短缓存 TTL |
 | `MEMORY_BRIDGE_SEMANTIC_CACHE_MAX_ENTRIES` | 256 | 1–4096 | 语义短缓存最大条目数；失败结果不长期缓存 |
+| `MEMORY_BRIDGE_ABSTENTION_PROFILE` | `strict` | `strict`、`balanced`、`eager` | 弃答档位；一个变量同时改「相似度门 / 全拒兜底条数 / filler 条数」三个默认值 |
+| `MEMORY_BRIDGE_SEMANTIC_RERANK_EMPTY_FALLBACK_LIMIT` | 随档位（`strict`=3） | 0–8 | 重排全拒时的兜底条数 |
+| `MEMORY_BRIDGE_SEMANTIC_RERANK_FILLER_LIMIT` | 随档位（`strict`=0） | 0–8 | 相关不足时按粗排分填充的候选条数；知识库多跳场景保留链条中间环节 |
+| `MEMORY_BRIDGE_SEMANTIC_RERANK_CANDIDATE_TEXT_BUDGET` | 640 | 128–16384 | 送重排的候选正文字符预算 |
+| `MEMORY_BRIDGE_SEMANTIC_RERANK_NUM_CTX` | 0（自动） | 0–131072 | 重排调用上下文窗口；0 表示不显式指定 |
+| `MEMORY_BRIDGE_RERANK_PROVIDER` | `llm` | `llm`、`cross_encoder` | 重排提供方；`cross_encoder` 走本地 sidecar |
+| `MEMORY_BRIDGE_RERANK_CONFIDENCE_WEIGHT` | 0.45 | 0–1 | 排序权重 `relevance = semantic×(1-w) + confidence×w` |
+| `MEMORY_BRIDGE_RERANK_GATE_POLICY` | 0.9 | 0–1 | `policy` 语料域（制度/合同）的相关性门槛，从严 |
+| `MEMORY_BRIDGE_RERANK_GATE_OPEN` | 0.65 | 0–1 | `open` 语料域（维基类开放语料）的门槛，从宽 |
+| `MEMORY_BRIDGE_RERANK_GATE_CHAT` | 0.7 | 0–1 | `chat` 语料域（对话记忆）的门槛 |
+| `MEMORY_BRIDGE_CROSS_ENCODER_URL` | `http://127.0.0.1:3798` | Base URL | CE sidecar 地址（仅 `cross_encoder` 生效） |
+| `MEMORY_BRIDGE_CROSS_ENCODER_MODEL` | `bge-reranker-v2-m3` | 模型名 | 缓存键与遥测展示用 |
+| `MEMORY_BRIDGE_CROSS_ENCODER_TIMEOUT_MS` | 30000 | 1000–600000 | 单次 CE HTTP 超时 |
+| `MEMORY_BRIDGE_CROSS_ENCODER_BATCH_SIZE` | 32 | 1–128 | 每次 CE 请求的候选条数 |
+| `MEMORY_BRIDGE_CROSS_ENCODER_CONF_SCALE` | 3 | 1–10 | 分数→confidence 陡度 k（`sigmoid(score×k)`）；3 时 conf 门槛≈分数门槛 |
+
+### 4.1 弃答档位
+
+`MEMORY_BRIDGE_ABSTENTION_PROFILE` 是一次切换一组召回闸门的入口；单项 env 优先级更高。
+
+| 档位 | 相似度门 | 全拒兜底 | filler | 适用 |
+|---|---:|---:|---:|---|
+| `strict` | 0.35 | 3 | 0（关） | 出厂基线，零回归 |
+| `balanced` | 0.30 | 4 | 2 | 知识库场景推荐档 |
+| `eager` | 0.25 | 6 | 4 | 大干扰库，宁多勿缺 |
+
+确定性弃答（墓碑、规范值不匹配）**永不放宽**，与档位无关。
+
+### 4.2 语料域门槛
+
+`memories.corpus_domain` 为 `policy`/`open`/`chat` 时，逐候选改用上表的域门槛；
+未标注（`NULL`）走全局默认 `MEMORY_BRIDGE_MIN_RERANK_CONFIDENCE`。CE 重排仍按
+`score ≥ 0` 判定同话题，域门槛用于压掉"同话题但不是答案"的干扰段落。
+
+### 4.3 Cross-Encoder sidecar
+
+启用 `cross_encoder` 需先启动 `sidecar/ce-rerank`（默认 `127.0.0.1:3798`，模型权重约
+2.1GB）。sidecar 不可用时召回走既有降级路径（`qualityState=degraded`），**不自动回落
+LLM 重排**——行为可预测优先。CE 路径不适用 LLM 路径的文本预算、`num_ctx` 与早停参数，
+改由 sidecar 按 token 截断。
 
 可靠检索在送入重排 provider 前使用独立延迟预算：ranking query 最多 128 字，
 每个 16 条 provider 批次的候选正文合计最多 640 字。超长 query 只在 provider
@@ -145,6 +187,16 @@ Recall、MRR、nDCG、负例误召回、P95 延迟和 zero-result 热点。
 原始 turn、Episode、版本、证据和 FTS 仍保留。摘要失效后会恢复 ANN/词项，并通过
 持久 outbox 重建 Dense。SQLite 释放页会先进入 freelist 供后续写入复用，因此在线
 精炼主要抑制继续增长，不会强制执行阻塞式 `VACUUM`。
+
+### 7.1 L4 摘要时区
+
+| 变量 | 默认值 | 范围 | 说明 |
+|---|---:|---:|---|
+| `MEMORY_BRIDGE_SUMMARY_TIMEZONE_OFFSET_MINUTES` | 本机时区偏移 | -840–840 | session/day/week 摘要的「一天」边界 |
+
+day/week 摘要按该偏移切桶。**它同时参与摘要的 generation key**，改动后既有 day/week
+摘要会被判定为需要重算，因此不要在生产环境随手调整；跨时区部署应在首次导入前就定好。
+传入非法值时回退到本机偏移。
 
 ## 8. 检索日志
 
@@ -267,10 +319,12 @@ npm run mcp:built
 | `MEMORY_BRIDGE_REFLECTION_MIN_NEW_TURNS` | 12 | 1–1000 | 自动窗口最少新增 user turn |
 | `MEMORY_BRIDGE_REFLECTION_MAX_TURNS` | 40 | 2–200 | 单 pipeline 窗口 turn 上限 |
 | `MEMORY_BRIDGE_REFLECTION_TOKEN_BUDGET` | 8000 | 512–32000 | 单窗口硬 token 预算 |
-| `MEMORY_BRIDGE_REFLECTION_LOOKBACK_DAYS` | 30 | 1–365 | 语义回看范围，不延长证据 TTL |
-| `MEMORY_BRIDGE_REFLECTION_MIN_PATTERN_EVIDENCE` | 3 | 2–20 | 推断最少不同 turn 数 |
-| `MEMORY_BRIDGE_REFLECTION_MAX_DAILY_CALLS` | 48 | 0–1000 | 每 principal/namespace 物理调用预算 |
+| `MEMORY_BRIDGE_REFLECTION_LOOKBACK_DAYS` | 180 | 1–365 | 语义回看范围，不延长证据 TTL |
+| `MEMORY_BRIDGE_REFLECTION_MIN_PATTERN_EVIDENCE` | 3 | 3–5 | 推断最少不同 turn 数 |
+| `MEMORY_BRIDGE_REFLECTION_MAX_DAILY_CALLS` | 1000 | 0–1000 | 每 principal/namespace 每日物理调用预算 |
 | `MEMORY_BRIDGE_REFLECTION_CONCURRENCY` | 1 | 1–8 | 同 owner/namespace 同时模型调用数 |
+| `MEMORY_BRIDGE_REFLECTION_REQUIRE_CROSS_SESSION_EVIDENCE` | `false` | `1`/`true` 打开 | 要求推断证据跨越多个 session |
+| `MEMORY_BRIDGE_REFLECTION_REQUIRE_CROSS_DAY_EVIDENCE` | `false` | `1`/`true` 打开 | 要求推断证据跨越多个自然日（按 7.1 的摘要时区切分） |
 
 本机 14B 推荐保持并发 1。每日预算在调用前原子预留，失败调用同样形成账本；把
 并发或预算调大只改变资源上限，不改变 scope、证据、tombstone 和人工确认门槛。

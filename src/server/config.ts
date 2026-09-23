@@ -102,7 +102,7 @@ export function parseModelKeepAlive(
 //   MEMORY_BRIDGE_SEMANTIC_RERANK_FILLER_LIMIT。
 // strict   = 出厂基线（零回归）：相似度门 0.35、全拒兜底 3、filler 关闭
 // balanced = 知识库场景推荐档：门 0.30、兜底 4、filler 2
-//            （评测实证：HotpotQA EM 34%→44%、R@8 0.61→0.87、LoCoMo 11→17）
+//            （比 strict 略松，允许在有重排兜底的情况下回答边界问题）
 // eager    = 激进作答档：门 0.25、兜底 6、filler 4（大干扰库、宁多勿缺）
 export const ABSTENTION_PROFILES = {
   strict: {

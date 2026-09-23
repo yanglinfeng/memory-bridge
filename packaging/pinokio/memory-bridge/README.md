@@ -4,6 +4,16 @@
 中的完整中文手册是 `docs/one-click-installation-and-operation.md`；公开发布启动器时
 应把该手册作为 Release 文档一并提供。
 
+`bundle/` 是**构建产物**，不纳入源码仓库的版本控制，由源码仓根目录生成：
+
+```
+npm run bundle:pinokio          # 生成 / 刷新 bundle
+npm run bundle:pinokio:check    # 校验 bundle 与源码是否一致
+```
+
+发布 Pinokio 启动器时，需把 `install.js` 等同级启动脚本与 `bundle/` 一起打成发布包
+（只给 `bundle/` 不能用）。`npm test` 会先自动生成 `bundle/`。
+
 - 一键安装：构建到 `app/`，数据写入 `state/data/`。
 - 安全升级：先构建 staging，备份 SQLite，再原子切换；失败自动恢复旧代码。
 - 故障诊断：检查 Node、构建产物、SQLite、固定 Ollama 模型、端口和 MCP stdio，并将回执写入 `state/receipts/`。

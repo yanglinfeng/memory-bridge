@@ -49,7 +49,7 @@ MEMORY_BRIDGE_ABSTENTION_PROFILE = strict | balanced | eager
 | `MEMORY_BRIDGE_SEMANTIC_RERANK_EMPTY_FALLBACK_LIMIT`（重排全拒兜底条数） | 3 | 4 | 6 |
 | `MEMORY_BRIDGE_SEMANTIC_RERANK_FILLER_LIMIT`（相关不足按粗排分填充） | 0（关） | 2 | 4 |
 
-balanced 档的依据：HotpotQA EM 34%→44%、R@8 0.61→0.87、LoCoMo 11→17、中文 12/12（filler=3 实测档，档案取 2 保守起步）。
+balanced 档的依据：内部调优时最优档位为 `filler=3`，档案取 2 是刻意保守一档，避免在自家语料上过拟合（完整评测条件与脚本随 `BENCHMARKS.md` 发布）。
 
 **不在档案里的固定闸门（改动需改代码，属语义级）**：
 - 确定性弃答（墓碑 `deterministic_tombstone_abstention`、规范值不匹配 `deterministic_canonical_value_mismatch`）——**永不放宽**，这是防幻觉的最后防线；

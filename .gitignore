@@ -32,3 +32,9 @@ third-person-rpg/
 
 # 部署配置（生成物，不入库）
 kb-auth-spec.json
+
+# Pinokio 启动器的源码快照（构建产物，不入库）
+# 生成：npm run bundle:pinokio
+# 校验：npm run bundle:pinokio:check
+# 发布 Pinokio 启动器时，bundle/ 需随启动器目录一起打包提供。
+packaging/pinokio/memory-bridge/bundle/

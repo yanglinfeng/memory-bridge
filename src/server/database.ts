@@ -22,8 +22,23 @@ import {
   V39_MEMORY_EVIDENCE_TRIGGERS,
 } from './schema-sql.js';
 
+import {
+  hasColumn,
+  quoteIdentifier,
+} from './sqlite-schema-helpers.js';
+import {
+  IDENTITY_SCHEMA_VERSION,
+  hasSchemaMigrationLedger,
+  createSchemaMigrationLedger,
+  recordV26CurrentSchemaAttestation,
+  replaceV26SchemaAttestation,
+  hasCurrentV26SchemaAttestation,
+} from './schema-migration-ledger.js';
+import type {
+  V26AttestationKind,
+  V26SchemaAttestation,
+} from './schema-migration-ledger.js';
 export const SCHEMA_VERSION = 44;
-const IDENTITY_SCHEMA_VERSION = 26;
 
 export interface OpenDatabaseOptions {
   testOnlyAfterMigrationBackup?: () => void;
@@ -142,20 +157,6 @@ function addColumnIfMissing(
   database.exec(statement);
 }
 
-function hasColumn(
-  database: DatabaseSync,
-  table: string,
-  column: string,
-): boolean {
-  const columns = database
-    .prepare(`PRAGMA table_info(${table})`)
-    .all() as Array<Record<string, unknown>>;
-  return columns.some((entry) => entry.name === column);
-}
-
-function quoteIdentifier(identifier: string): string {
-  return `"${identifier.replaceAll('"', '""')}"`;
-}
 
 function installIdentityImmutabilityTriggers(
   database: DatabaseSync,
@@ -350,124 +351,6 @@ function hasCurrentV39MemoryEvidenceTriggers(
   });
 }
 
-function hasSchemaMigrationLedger(database: DatabaseSync): boolean {
-  return Boolean(
-    database
-      .prepare(
-        `SELECT name
-         FROM sqlite_master
-         WHERE type = 'table' AND name = 'schema_migration_ledger'`,
-      )
-      .get(),
-  );
-}
-
-function createSchemaMigrationLedger(database: DatabaseSync): void {
-  database.exec(`
-    CREATE TABLE schema_migration_ledger (
-      schema_version INTEGER PRIMARY KEY,
-      migration_key TEXT NOT NULL UNIQUE,
-      from_version INTEGER NOT NULL,
-      attestation_kind TEXT NOT NULL
-        CHECK (attestation_kind IN (
-          'migration', 'safe_no_project_adoption'
-        )),
-      schema_fingerprint TEXT NOT NULL,
-      legacy_project_scope_count INTEGER NOT NULL
-        CHECK (legacy_project_scope_count = 0),
-      applied_at TEXT NOT NULL CHECK (length(trim(applied_at)) > 0),
-      CHECK (
-        (attestation_kind = 'migration'
-          AND from_version >= 0
-          AND from_version < schema_version)
-        OR
-        (attestation_kind = 'safe_no_project_adoption'
-          AND from_version = schema_version)
-      )
-    );
-
-    CREATE TRIGGER schema_migration_ledger_immutable_update
-    BEFORE UPDATE ON schema_migration_ledger
-    BEGIN
-      SELECT RAISE(ABORT, 'schema migration ledger is immutable');
-    END;
-
-    CREATE TRIGGER schema_migration_ledger_immutable_delete
-    BEFORE DELETE ON schema_migration_ledger
-    BEGIN
-      SELECT RAISE(ABORT, 'schema migration ledger is immutable');
-    END;
-  `);
-}
-
-type V26AttestationKind = 'migration' | 'safe_no_project_adoption';
-type V26LedgerGeneration = 'v1' | 'v2';
-
-interface V26SchemaAttestation {
-  generation: V26LedgerGeneration;
-  fromVersion: number;
-  attestationKind: V26AttestationKind;
-}
-
-function recordV26CurrentSchemaAttestation(
-  database: DatabaseSync,
-  fromVersion: number,
-  attestationKind: V26AttestationKind,
-): void {
-  database
-    .prepare(
-      `INSERT INTO schema_migration_ledger (
-         schema_version,
-         migration_key,
-         from_version,
-         attestation_kind,
-         schema_fingerprint,
-         legacy_project_scope_count,
-         applied_at
-       ) VALUES (?, ?, ?, ?, ?, 0, ?)`,
-    )
-    .run(
-      IDENTITY_SCHEMA_VERSION,
-      V26_IDENTITY_IMMUTABILITY_MIGRATION_KEY,
-      fromVersion,
-      attestationKind,
-      V26_IDENTITY_IMMUTABILITY_SCHEMA_FINGERPRINT,
-      new Date().toISOString(),
-    );
-}
-
-function replaceV26SchemaAttestation(
-  database: DatabaseSync,
-  attestation: Pick<
-    V26SchemaAttestation,
-    'fromVersion' | 'attestationKind'
-  >,
-): void {
-  database.exec('DROP TABLE schema_migration_ledger;');
-  createSchemaMigrationLedger(database);
-  recordV26CurrentSchemaAttestation(
-    database,
-    attestation.fromVersion,
-    attestation.attestationKind,
-  );
-}
-
-function hasCurrentV26SchemaAttestation(database: DatabaseSync): boolean {
-  if (!hasSchemaMigrationLedger(database)) return false;
-  const attestation = database
-    .prepare(
-      `SELECT migration_key, schema_fingerprint
-       FROM schema_migration_ledger
-       WHERE schema_version = ?`,
-    )
-    .get(IDENTITY_SCHEMA_VERSION);
-  return (
-    attestation?.migration_key ===
-      V26_IDENTITY_IMMUTABILITY_MIGRATION_KEY &&
-    attestation?.schema_fingerprint ===
-      V26_IDENTITY_IMMUTABILITY_SCHEMA_FINGERPRINT
-  );
-}
 
 function assertSchemaMigrationLedger(
   database: DatabaseSync,

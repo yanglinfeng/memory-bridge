@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>忆桥授权配置生成器</title>
+<style>
+  :root{
+    --bg:#f6f6f4; --panel:#ffffff; --line:#e2e0da; --line2:#cfccc4;
+    --tx:#1f1f1e; --tx2:#5f5e5a; --tx3:#8a8880;
+    --blue:#185fa5; --blue-bg:#e6f1fb; --blue-line:#b5d4f4;
+    --amber:#854f0b; --amber-bg:#faeeda; --amber-line:#fac775;
+    --red:#a32d2d; --red-bg:#fcebeb; --red-line:#f7c1c1;
+    --green:#0f6e56; --green-bg:#e1f5ee; --green-line:#9fe1cb;
+    --purple:#534ab7; --purple-bg:#eeedfe;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--tx);
+    font:13px/1.6 system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+  .wrap{max-width:1180px;margin:0 auto;padding:24px 20px 60px}
+  h1{font-size:19px;font-weight:500;margin:0 0 4px}
+  .sub{color:var(--tx2);margin:0 0 20px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+  @media(max-width:900px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px}
+  .card h2{font-size:14px;font-weight:500;margin:0 0 12px;display:flex;justify-content:space-between;align-items:center}
+  .hint{color:var(--tx3);font-size:12px;font-weight:400}
+  label{display:block;font-size:12px;color:var(--tx2);margin:8px 0 3px}
+  input[type=text],input[type=number],input[type=date],select{
+    width:100%;padding:6px 8px;border:1px solid var(--line2);border-radius:8px;
+    font:13px/1.4 system-ui,sans-serif;color:var(--tx);background:#fff}
+  input:focus,select:focus{outline:none;border-color:var(--blue)}
+  .row{display:flex;gap:8px;align-items:flex-end}
+  .row > *{flex:1}
+  button{cursor:pointer;border:1px solid var(--line2);background:#fff;color:var(--tx);
+    border-radius:8px;padding:6px 10px;font:13px system-ui,sans-serif}
+  button:hover{border-color:var(--tx3)}
+  button.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+  button.primary:hover{background:#0c447c}
+  button.tiny{padding:3px 7px;font-size:12px}
+  button.danger{color:var(--red);border-color:var(--red-line)}
+  .item{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;background:#fcfcfb}
+  .item-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .chip{display:inline-block;font-size:12px;padding:2px 8px;border-radius:999px;
+    background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-line);margin:2px 4px 2px 0}
+  .chip.role{background:var(--purple-bg);color:var(--purple);border-color:#cecbf6}
+  .checks{display:flex;flex-wrap:wrap;gap:4px 6px;margin-top:6px}
+  .check{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--tx2);
+    border:1px solid var(--line2);border-radius:999px;padding:2px 8px;background:#fff;cursor:pointer}
+  .check input{accent-color:var(--blue)}
+  pre{margin:0;padding:12px;background:#1f1f1e;color:#eaeae6;border-radius:10px;
+    overflow:auto;max-height:320px;font:12px/1.55 var(--mono)}
+  .out-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+  .msg{border-radius:8px;padding:8px 10px;margin-bottom:8px;font-size:12.5px;border:1px solid}
+  .msg.err{background:var(--red-bg);border-color:var(--red-line);color:var(--red)}
+  .msg.warn{background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber)}
+  .msg.ok{background:var(--green-bg);border-color:var(--green-line);color:var(--green)}
+  .msg code{font-family:var(--mono);font-size:11.5px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+  th{color:var(--tx3);font-weight:400}
+  .tabs{display:flex;gap:6px;margin-bottom:10px}
+  .tabs button.on{background:var(--blue);border-color:var(--blue);color:#fff}
+  .muted{color:var(--tx3);font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>忆桥授权配置生成器</h1>
+  <p class="sub">配置部门与主体，一键产出 <code>kb-auth-spec.json</code>、<code>session-scope-grants.json</code> 与签发命令。配合 <code>scripts/kb-provision.mjs</code> 使用。</p>
+
+  <div class="grid">
+    <div>
+      <div class="card">
+        <h2>① 部门（project scope）<span class="hint">财务 / 人事 / 销售…</span></h2>
+        <div id="depts"></div>
+        <div class="row" style="margin-top:8px">
+          <input type="text" id="newDept" placeholder="英文短名，如 finance（会自动补 dept- 前缀）">
+          <button class="primary" style="flex:0 0 auto" onclick="addDept()">添加部门</button>
+        </div>
+        <p class="muted" style="margin:8px 0 0">命名规则：<code>^[A-Za-z0-9_-][A-Za-z0-9._:-]{0,127}$</code>，建议统一小写连字符。</p>
+      </div>
+
+      <div class="card">
+        <h2>② 主体（调用方 / 服务账号）<span class="hint">一个服务一个主体</span></h2>
+        <div id="principals"></div>
+        <button class="primary" style="margin-top:4px" onclick="addPrincipal()">添加主体</button>
+      </div>
+
+      <div class="card">
+        <h2>③ 检查</h2>
+        <div id="messages"></div>
+        <table id="matrix"></table>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="out-head">
+          <h2 style="margin:0">④ 产出</h2>
+          <div>
+            <button class="tiny" onclick="download('kb-auth-spec.json', out.spec)">下载 spec</button>
+            <button class="tiny" onclick="download('session-scope-grants.json', out.grants)">下载矩阵</button>
+          </div>
+        </div>
+        <div class="tabs">
+          <button id="tab-spec" class="on" onclick="setTab('spec')">kb-auth-spec.json</button>
+          <button id="tab-grants" onclick="setTab('grants')">授权矩阵</button>
+          <button id="tab-cmd" onclick="setTab('cmd')">签发命令</button>
+        </div>
+        <div class="out-head"><span class="muted" id="outName"></span>
+          <button class="tiny" onclick="copyOut()">复制</button></div>
+        <pre id="out"></pre>
+      </div>
+
+      <div class="card">
+        <h2>⑤ 幂等键模板（务必带部门前缀）</h2>
+        <div id="idem"></div>
+        <p class="muted" style="margin:8px 0 0">内核幂等键唯一约束是 <code>(user_id, namespace, key)</code>，<b>不含 scope</b>。跨部门复用同一 key 会静默去重、第二个部门不落库。</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const ID_PATTERN = /^[A-Za-z0-9_-][A-Za-z0-9._:-]{0,127}$/;
+// 角色只存"键"，产出时统一拼 role: 前缀（内核要求 scope 形如 type:key）
+const ROLE_PRESETS = ['kb-admin', 'auditor'];
+
+const state = {
+  departments: ['dept-finance', 'dept-hr'],
+  principals: [
+    { id: 'kb-writer', displayName: '知识库文档摄取服务', depts: ['dept-finance', 'dept-hr'],
+      roles: ['kb-admin'], maxActiveSessions: 32, tokenLabel: 'kb-writer-prod', expiresAt: '' },
+  ],
+};
+let tab = 'spec';
+const out = { spec: '', grants: '', cmd: '' };
+
+function slug(v) {
+  return String(v || '').toLowerCase().trim().replace(/[^a-z0-9._:-]+/g, '-').replace(/^-+|-+$/g, '');
+}
+
+function addDept() {
+  const raw = document.getElementById('newDept').value;
+  if (!raw.trim()) return;
+  let key = slug(raw);
+  if (!key.startsWith('dept-') && !key.startsWith('proj-')) key = 'dept-' + key;
+  if (state.departments.includes(key)) { document.getElementById('newDept').value = ''; return; }
+  state.departments.push(key);
+  document.getElementById('newDept').value = '';
+  render();
+}
+
+function removeDept(key) {
+  state.departments = state.departments.filter((d) => d !== key);
+  state.principals.forEach((p) => { p.depts = p.depts.filter((d) => d !== key); });
+  render();
+}
+
+function addPrincipal() {
+  state.principals.push({
+    id: '', displayName: '', depts: [], roles: [], maxActiveSessions: 32,
+    tokenLabel: '', expiresAt: '',
+  });
+  render();
+}
+
+function removePrincipal(i) { state.principals.splice(i, 1); render(); }
+
+function setTab(t) { tab = t; render(); }
+
+function scopesOf(p) {
+  return [...p.depts.map((d) => 'project:' + d), ...p.roles.map((r) => 'role:' + r)].sort();
+}
+
+function validate() {
+  const errors = [];
+  const warnings = [];
+  const seen = new Set();
+  if (!state.departments.length) warnings.push('还没有配置任何部门——主体将拿不到任何 project scope。');
+  state.principals.forEach((p, i) => {
+    const where = '主体 ' + (i + 1) + (p.id ? '（' + p.id + '）' : '');
+    if (!p.id) errors.push(where + ' 缺少 id。');
+    else if (!ID_PATTERN.test(p.id)) errors.push(where + ' 的 id 不合法：' + p.id);
+    else if (seen.has(p.id)) errors.push('主体 id 重复：' + p.id);
+    else seen.add(p.id);
+    if (!scopesOf(p).length) warnings.push(where + ' 未授予任何 scope：无法签发会话，写入受控作用域会 403。');
+    if (!p.tokenLabel) warnings.push(where + ' 未填令牌 label：不会签发令牌。');
+    if (!(p.maxActiveSessions >= 1)) errors.push(where + ' 的 maxActiveSessions 必须是正整数。');
+    // 自检：产出必须逐条符合内核 parseGrantedScope 的要求（type 只能是 project/role，
+    // 且形如 type:key）。少一个冒号就会让整份矩阵校验失败、会话签发被静默禁用。
+    scopesOf(p).forEach((scope) => {
+      const sep = scope.indexOf(':');
+      const type = sep > 0 ? scope.slice(0, sep) : '';
+      const key = sep > 0 ? scope.slice(sep + 1) : '';
+      if (!['project', 'role'].includes(type) || !ID_PATTERN.test(key)) {
+        errors.push(where + ' 生成了内核不接受的 scope：' + scope);
+      }
+    });
+    if (p.expiresAt && Number.isNaN(Date.parse(p.expiresAt))) errors.push(where + ' 的令牌有效期不是合法日期。');
+    else if (p.expiresAt && new Date(p.expiresAt) <= new Date()) warnings.push(where + ' 的令牌有效期已过期。');
+  });
+  warnings.push('apply 后本库首次出现凭据，「匿名 loopback 放行」将永久失效：所有调用必须带令牌，召回必须带 x-memory-session-id。');
+  return { errors, warnings };
+}
+
+function build() {
+  const principals = state.principals.map((p) => ({
+    id: p.id || 'unnamed',
+    displayName: p.displayName || p.id || 'unnamed',
+    scopes: scopesOf(p),
+    maxActiveSessions: Number(p.maxActiveSessions) || 32,
+    tokens: p.tokenLabel ? [{ label: p.tokenLabel, ...(p.expiresAt ? { expiresAt: new Date(p.expiresAt).toISOString() } : {}) }] : [],
+  }));
+  const spec = { principals };
+  const grants = { principals: {} };
+  principals.forEach((p) => {
+    grants.principals[p.id] = { scopes: p.scopes, maxActiveSessions: p.maxActiveSessions };
+  });
+  const cmd = [
+    '# 1) 保存上面的 spec 为本文件（下载按钮已生成 kb-auth-spec.json）',
+    'SPEC=./kb-auth-spec.json',
+    'DATA=/绝对路径/到/生产/data        # 指向实际数据目录',
+    '',
+    '# 2) 只校验 spec，不碰任何文件',
+    'npm run kb:provision -- check --spec $SPEC',
+    '',
+    '# 3) 预演：会列出要建的主体 / 要签的令牌 / 匿名通道是否将关闭（只读）',
+    'npm run kb:provision -- plan  --spec $SPEC --data-dir $DATA',
+    '',
+    '# 4) 签发：写矩阵（先备份）+ 建主体 + 发令牌',
+    'npm run kb:provision -- apply --spec $SPEC --data-dir $DATA \\',
+    '  --token-out /安全路径/kb-tokens.json --yes',
+    '',
+    '# 5) 客户改造完（带令牌 + 带会话）后跑隔离验收',
+    'KB_BASE_URL=http://127.0.0.1:3789 \\',
+    '  KB_TOKEN_FILE=/安全路径/kb-tokens.json \\',
+    '  npm run kb:acceptance',
+    '',
+    '# 排障：活跃会话 / 主体凭据',
+    'npm run kb:provision -- sessions --principal ' + (principals[0]?.id || 'kb-writer') + ' --data-dir $DATA',
+    'npm run kb:provision -- list --data-dir $DATA',
+  ].join('\n');
+  return { spec: JSON.stringify(spec, null, 2) + '\n', grants: JSON.stringify(grants, null, 2) + '\n', cmd };
+}
+
+function render() {
+  const d = document.getElementById('depts');
+  d.innerHTML = state.departments.length
+    ? state.departments.map((key) => `<span class="chip">project:${key}
+        <a href="#" onclick="removeDept('${key}');return false" style="color:inherit;text-decoration:none;margin-left:4px">×</a></span>`).join('')
+    : '<span class="muted">尚未添加部门</span>';
+
+  const box = document.getElementById('principals');
+  box.innerHTML = state.principals.map((p, i) => `
+    <div class="item">
+      <div class="item-head">
+        <strong style="font-weight:500">${p.id ? p.id : '未命名主体'}</strong>
+        <button class="tiny danger" onclick="removePrincipal(${i})">删除</button>
+      </div>
+      <div class="row">
+        <div><label>主体 id（矩阵 key / 令牌身份）</label>
+          <input type="text" value="${p.id}" oninput="upd(${i},'id',this.value)" placeholder="kb-writer"></div>
+        <div><label>显示名</label>
+          <input type="text" value="${p.displayName}" oninput="upd(${i},'displayName',this.value)" placeholder="知识库文档摄取服务"></div>
+      </div>
+      <div class="row">
+        <div><label>maxActiveSessions</label>
+          <input type="number" min="1" value="${p.maxActiveSessions}" oninput="upd(${i},'maxActiveSessions',this.value)"></div>
+        <div><label>令牌 label</label>
+          <input type="text" value="${p.tokenLabel}" oninput="upd(${i},'tokenLabel',this.value)" placeholder="kb-writer-prod"></div>
+        <div><label>令牌有效期（可空=永不过期）</label>
+          <input type="date" value="${p.expiresAt}" oninput="upd(${i},'expiresAt',this.value)"></div>
+      </div>
+      <label>可访问部门（勾选即授予 project scope，同时也就授予了该部门的写入权）</label>
+      <div class="checks">
+        ${state.departments.map((key) => `<label class="check">
+          <input type="checkbox" ${p.depts.includes(key) ? 'checked' : ''}
+            onchange="toggleDept(${i},'${key}',this.checked)">${key}</label>`).join('') || '<span class="muted">先添加部门</span>'}
+      </div>
+      <label>角色（role scope，跨部门横向授权）</label>
+      <div class="checks">
+        ${ROLE_PRESETS.map((r) => `<label class="check">
+          <input type="checkbox" ${p.roles.includes(r) ? 'checked' : ''}
+            onchange="toggleRole(${i},'${r}',this.checked)">role:${r}</label>`).join('')}
+        <input type="text" style="width:170px;padding:2px 8px;font-size:12px;border-radius:999px"
+          placeholder="自定义角色键，回车（可写 role-xxx）" onkeydown="if(event.key==='Enter'){addRole(${i},this.value);this.value=''}">
+      </div>
+    </div>`).join('') || '<span class="muted">尚未添加主体</span>';
+
+  const built = build();
+  out.spec = built.spec; out.grants = built.grants; out.cmd = built.cmd;
+  const map = { spec: ['kb-auth-spec.json', built.spec], grants: ['session-scope-grants.json', built.grants], cmd: ['签发命令', built.cmd] };
+  document.getElementById('outName').textContent = map[tab][0];
+  document.getElementById('out').textContent = map[tab][1];
+  ['spec', 'grants', 'cmd'].forEach((t) => {
+    document.getElementById('tab-' + t).className = t === tab ? 'on' : '';
+  });
+
+  const { errors, warnings } = validate();
+  document.getElementById('messages').innerHTML =
+    (errors.length ? errors.map((e) => `<div class="msg err">${escapeHtml(e)}</div>`).join('') : '')
+    + warnings.map((w) => `<div class="msg warn">${escapeHtml(w)}</div>`).join('')
+    + (!errors.length ? '<div class="msg ok">配置可用。请先 plan 预演，再 apply。</div>' : '');
+
+  const rows = state.principals.map((p) => `<tr><td>${escapeHtml(p.id || '—')}</td><td>
+    ${scopesOf(p).map((s) => `<span class="chip ${s.startsWith('role:') ? 'role' : ''}">${s}</span>`).join('') || '<span class="muted">无</span>'}
+    </td><td>${p.maxActiveSessions || 32}</td></tr>`).join('');
+  document.getElementById('matrix').innerHTML =
+    `<tr><th>主体</th><th>授权 scope</th><th>会话上限</th></tr>${rows || ''}`;
+
+  document.getElementById('idem').innerHTML = state.departments.length
+    ? state.departments.map((key) => `<div class="msg ok" style="margin-bottom:6px"><code>kb:${key}:&lt;文档slug&gt;:&lt;章节&gt;[:版本]</code></div>`).join('')
+    : '<span class="muted">先添加部门</span>';
+}
+
+function upd(i, field, value) {
+  state.principals[i][field] = field === 'maxActiveSessions' ? Number(value) : value;
+  render();
+}
+function toggleDept(i, key, on) {
+  const p = state.principals[i];
+  p.depts = on ? [...new Set([...p.depts, key])] : p.depts.filter((d) => d !== key);
+  render();
+}
+function toggleRole(i, key, on) {
+  const p = state.principals[i];
+  p.roles = on ? [...new Set([...p.roles, key])] : p.roles.filter((r) => r !== key);
+  render();
+}
+function addRole(i, raw) {
+  let key = slug(raw);
+  if (!key) return;
+  if (key.startsWith('role-')) key = key.slice(5);
+  if (!key || !ID_PATTERN.test(key)) return;
+  const p = state.principals[i];
+  if (!p.roles.includes(key)) p.roles.push(key);
+  render();
+}
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function copyOut() {
+  navigator.clipboard.writeText(document.getElementById('out').textContent);
+}
+function download(name, text) {
+  const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+  const a = document.createElement('a');
+  a.href = url; a.download = name; a.click();
+  URL.revokeObjectURL(url);
+}
+
+document.getElementById('newDept').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') addDept();
+});
+render();
+</script>
+</body>
+</html>

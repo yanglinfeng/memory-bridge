@@ -1,0 +1,462 @@
+{
+  "datasetId": "memory-quality-v1",
+  "schemaVersion": 1,
+  "language": "zh-CN",
+  "description": "AIRI 忆桥固定 namespace 质量门禁：108 个稳定事实、20 个凭据、20 个话语负例、50 个冲突关系和 100 个同义重复。",
+  "extractionCases": [
+    {
+      "id": "positive-01-profile",
+      "text": "我的名字是林晨。我长期住在上海。我的时区固定用 Asia/Shanghai。我的职业是后端工程师。",
+      "expected": [
+        { "id": "p001", "canonical": "用户的名字是林晨。", "valueTerms": ["林晨"] },
+        { "id": "p002", "canonical": "用户长期居住在上海。", "valueTerms": ["上海"] },
+        { "id": "p003", "canonical": "用户的时区是 Asia/Shanghai。", "valueTerms": ["Asia/Shanghai", "asia/shanghai"] },
+        { "id": "p004", "canonical": "用户的职业是后端工程师。", "valueTerms": ["后端工程师"] }
+      ]
+    },
+    {
+      "id": "positive-02-interface",
+      "text": "我写代码主要用 VS Code。我希望你一直用中文回复。我长期使用深色界面。回答我时请保持简洁直接。",
+      "expected": [
+        { "id": "p005", "canonical": "用户写代码主要使用 VS Code。", "valueTerms": ["VS Code", "vscode"] },
+        { "id": "p006", "canonical": "用户希望长期使用中文回复。", "valueTerms": ["中文"] },
+        { "id": "p007", "canonical": "用户长期使用深色界面。", "valueTerms": ["深色"] },
+        { "id": "p008", "canonical": "用户偏好简洁直接的回答。", "valueTerms": ["简洁直接", "简洁", "直接"] }
+      ]
+    },
+    {
+      "id": "positive-03-project-atlas",
+      "text": "Atlas 项目的后端确定使用 Node.js。Atlas 的数据库确定使用 PostgreSQL。这个项目统一用 pnpm 管理依赖。Atlas 的生产环境固定部署在新加坡区域。",
+      "expected": [
+        { "id": "p009", "canonical": "Atlas 项目的后端使用 Node.js。", "valueTerms": ["Node.js", "nodejs"] },
+        { "id": "p010", "canonical": "Atlas 项目的数据库使用 PostgreSQL。", "valueTerms": ["PostgreSQL", "postgres"] },
+        { "id": "p011", "canonical": "Atlas 项目使用 pnpm 管理依赖。", "valueTerms": ["pnpm"] },
+        { "id": "p012", "canonical": "Atlas 的生产环境部署在新加坡区域。", "valueTerms": ["新加坡"] }
+      ]
+    },
+    {
+      "id": "positive-04-routine",
+      "text": "我长期习惯每天早上八点开始工作。我每周一下午三点做项目复盘。我固定每周跑步三次。我通常晚上十一点前睡觉。",
+      "expected": [
+        { "id": "p013", "canonical": "用户每天早上八点开始工作。", "valueTerms": ["早上八点", "8点", "08:00"] },
+        { "id": "p014", "canonical": "用户每周一下午三点做项目复盘。", "valueTerms": ["每周一下午三点", "周一下午三点", "15:00"] },
+        { "id": "p015", "canonical": "用户每周跑步三次。", "valueTerms": ["每周跑步三次", "每周三次", "3次"] },
+        { "id": "p016", "canonical": "用户通常晚上十一点前睡觉。", "valueTerms": ["晚上十一点", "23:00", "十一点前"] }
+      ]
+    },
+    {
+      "id": "positive-05-food",
+      "text": "我喝咖啡固定选不加糖的美式。我对花生严重过敏。我最喜欢的甜点是提拉米苏。我长期不吃特别辣的食物。",
+      "expected": [
+        { "id": "p017", "canonical": "用户喝咖啡固定选择不加糖的美式。", "valueTerms": ["不加糖的美式", "美式", "不加糖"] },
+        { "id": "p018", "canonical": "用户对花生严重过敏。", "valueTerms": ["花生"] },
+        { "id": "p019", "canonical": "用户最喜欢的甜点是提拉米苏。", "valueTerms": ["提拉米苏"] },
+        { "id": "p020", "canonical": "用户长期不吃特别辣的食物。", "valueTerms": ["特别辣", "辣"] }
+      ]
+    },
+    {
+      "id": "positive-06-travel",
+      "text": "出差在五小时以内时我一直优先坐高铁。住酒店我固定选禁烟房。坐飞机我长期偏好靠过道座位。我不会选择红眼航班。",
+      "expected": [
+        { "id": "p021", "canonical": "五小时以内的出差用户优先乘坐高铁。", "valueTerms": ["高铁"] },
+        { "id": "p022", "canonical": "用户住酒店固定选择禁烟房。", "valueTerms": ["禁烟房", "禁烟"] },
+        { "id": "p023", "canonical": "用户坐飞机长期偏好靠过道座位。", "valueTerms": ["靠过道", "过道座位"] },
+        { "id": "p024", "canonical": "用户不选择红眼航班。", "valueTerms": ["红眼航班", "红眼"] }
+      ]
+    },
+    {
+      "id": "positive-07-stack",
+      "text": "我新项目默认用 TypeScript。Web 前端长期首选 React。关系型数据库我优先用 PostgreSQL。端到端测试固定使用 Playwright。",
+      "expected": [
+        { "id": "p025", "canonical": "用户的新项目默认使用 TypeScript。", "valueTerms": ["TypeScript"] },
+        { "id": "p026", "canonical": "用户的 Web 前端长期首选 React。", "valueTerms": ["React"] },
+        { "id": "p027", "canonical": "用户优先使用 PostgreSQL 作为关系型数据库。", "valueTerms": ["PostgreSQL", "postgres"] },
+        { "id": "p028", "canonical": "用户固定使用 Playwright 做端到端测试。", "valueTerms": ["Playwright"] }
+      ]
+    },
+    {
+      "id": "positive-08-communication",
+      "text": "正式通知请一直发到我的工作邮箱。会议时长默认控制在三十分钟。所有会议必须提前提供议程。重要决定必须写进项目文档。",
+      "expected": [
+        { "id": "p029", "canonical": "用户希望正式通知发到工作邮箱。", "valueTerms": ["工作邮箱"] },
+        { "id": "p030", "canonical": "用户要求会议默认控制在三十分钟。", "valueTerms": ["三十分钟", "30分钟"] },
+        { "id": "p031", "canonical": "用户要求所有会议提前提供议程。", "valueTerms": ["提前提供议程", "议程"] },
+        { "id": "p032", "canonical": "用户要求重要决定写进项目文档。", "valueTerms": ["项目文档", "写进文档"] }
+      ]
+    },
+    {
+      "id": "positive-09-goals",
+      "text": "我今年的长期目标是发布两个开源工具。我准备持续一年练习英语口语。我计划长期保持每月读两本技术书。我今年要完成一次半程马拉松。",
+      "expected": [
+        { "id": "p033", "canonical": "用户今年的长期目标是发布两个开源工具。", "valueTerms": ["两个开源工具", "2个开源工具"] },
+        { "id": "p034", "canonical": "用户计划持续一年练习英语口语。", "valueTerms": ["英语口语"] },
+        { "id": "p035", "canonical": "用户计划每月读两本技术书。", "valueTerms": ["每月读两本", "每月两本"] },
+        { "id": "p036", "canonical": "用户今年要完成一次半程马拉松。", "valueTerms": ["半程马拉松", "半马"] }
+      ]
+    },
+    {
+      "id": "positive-10-devices",
+      "text": "我的主力电脑长期是 MacBook Pro。我的手机一直使用 Android 系统。我默认浏览器是 Chrome。我日常终端固定使用 iTerm2。",
+      "expected": [
+        { "id": "p037", "canonical": "用户的主力电脑是 MacBook Pro。", "valueTerms": ["MacBook Pro"] },
+        { "id": "p038", "canonical": "用户的手机使用 Android 系统。", "valueTerms": ["Android"] },
+        { "id": "p039", "canonical": "用户的默认浏览器是 Chrome。", "valueTerms": ["Chrome"] },
+        { "id": "p040", "canonical": "用户日常终端使用 iTerm2。", "valueTerms": ["iTerm2"] }
+      ]
+    },
+    {
+      "id": "positive-11-project-orbit",
+      "text": "Orbit 软件第一次打开必须是空数据。Orbit 坚持本地优先。断网时核心功能必须可用。Orbit 的用户数据每天自动备份一次。",
+      "expected": [
+        { "id": "p041", "canonical": "Orbit 软件第一次打开必须是空数据。", "valueTerms": ["空数据"] },
+        { "id": "p042", "canonical": "Orbit 项目坚持本地优先。", "valueTerms": ["本地优先"] },
+        { "id": "p043", "canonical": "Orbit 断网时核心功能必须可用。", "valueTerms": ["断网", "离线"] },
+        { "id": "p044", "canonical": "Orbit 的用户数据每天自动备份一次。", "valueTerms": ["每天自动备份一次", "每天备份"] }
+      ]
+    },
+    {
+      "id": "positive-12-accessibility",
+      "text": "界面正文默认至少十六像素。动画必须尊重减少动态效果设置。配色必须满足 WCAG AA 对比度。所有主要操作都要支持键盘完成。",
+      "expected": [
+        { "id": "p045", "canonical": "界面正文默认至少十六像素。", "valueTerms": ["十六像素", "16像素", "16px"] },
+        { "id": "p046", "canonical": "动画必须尊重减少动态效果设置。", "valueTerms": ["减少动态效果", "reduced motion"] },
+        { "id": "p047", "canonical": "配色必须满足 WCAG AA 对比度。", "valueTerms": ["WCAG AA"] },
+        { "id": "p048", "canonical": "所有主要操作都要支持键盘完成。", "valueTerms": ["键盘"] }
+      ]
+    },
+    {
+      "id": "positive-13-learning",
+      "text": "我正在把 Rust 作为长期学习方向。我长期关注分布式系统。每天晚上我固定阅读四十分钟。知识笔记我一直使用 Zettelkasten 方法。",
+      "expected": [
+        { "id": "p049", "canonical": "用户把 Rust 作为长期学习方向。", "valueTerms": ["Rust"] },
+        { "id": "p050", "canonical": "用户长期关注分布式系统。", "valueTerms": ["分布式系统"] },
+        { "id": "p051", "canonical": "用户每天晚上固定阅读四十分钟。", "valueTerms": ["四十分钟", "40分钟"] },
+        { "id": "p052", "canonical": "用户使用 Zettelkasten 方法做知识笔记。", "valueTerms": ["Zettelkasten"] }
+      ]
+    },
+    {
+      "id": "positive-14-media",
+      "text": "我长期最喜欢听爵士乐。我最喜欢的电影类型是科幻片。听播客我固定使用一点五倍速。看外语视频时我一直开启中文字幕。",
+      "expected": [
+        { "id": "p053", "canonical": "用户长期最喜欢听爵士乐。", "valueTerms": ["爵士乐"] },
+        { "id": "p054", "canonical": "用户最喜欢的电影类型是科幻片。", "valueTerms": ["科幻片", "科幻"] },
+        { "id": "p055", "canonical": "用户听播客固定使用一点五倍速。", "valueTerms": ["一点五倍速", "1.5倍"] },
+        { "id": "p056", "canonical": "用户看外语视频时开启中文字幕。", "valueTerms": ["中文字幕"] }
+      ]
+    },
+    {
+      "id": "positive-15-home",
+      "text": "我养的猫叫豆包。家里的绿植固定每周六浇水。冬天室温我习惯设为二十二度。我家里长期不用香味蜡烛。",
+      "expected": [
+        { "id": "p057", "canonical": "用户养的猫叫豆包。", "valueTerms": ["豆包"] },
+        { "id": "p058", "canonical": "用户家的绿植每周六浇水。", "valueTerms": ["每周六"] },
+        { "id": "p059", "canonical": "用户冬天习惯把室温设为二十二度。", "valueTerms": ["二十二度", "22度"] },
+        { "id": "p060", "canonical": "用户家里长期不用香味蜡烛。", "valueTerms": ["香味蜡烛"] }
+      ]
+    },
+    {
+      "id": "positive-16-code-style",
+      "text": "我长期偏好小而单一职责的函数。错误必须显式返回或抛出。每个修复都要补回归测试。代码注释默认使用中文。",
+      "expected": [
+        { "id": "p061", "canonical": "用户偏好小而单一职责的函数。", "valueTerms": ["单一职责", "小函数"] },
+        { "id": "p062", "canonical": "用户要求错误显式返回或抛出。", "valueTerms": ["显式返回或抛出", "显式"] },
+        { "id": "p063", "canonical": "用户要求每个修复补回归测试。", "valueTerms": ["回归测试"] },
+        { "id": "p064", "canonical": "用户的代码注释默认使用中文。", "valueTerms": ["中文"] }
+      ]
+    },
+    {
+      "id": "positive-17-git",
+      "text": "功能开发必须从独立分支开始。提交信息统一使用 Conventional Commits。合并前必须完成代码审查。主分支每次推送都要运行完整 CI。",
+      "expected": [
+        { "id": "p065", "canonical": "功能开发必须从独立分支开始。", "valueTerms": ["独立分支"] },
+        { "id": "p066", "canonical": "提交信息使用 Conventional Commits。", "valueTerms": ["Conventional Commits"] },
+        { "id": "p067", "canonical": "合并前必须完成代码审查。", "valueTerms": ["代码审查"] },
+        { "id": "p068", "canonical": "主分支每次推送都要运行完整 CI。", "valueTerms": ["完整 CI", "CI"] }
+      ]
+    },
+    {
+      "id": "positive-18-crm",
+      "text": "客户自动化项目用 CSV 导入线索。跟进到期前二十四小时必须提醒。客户状态固定分为新线索、跟进中和已成交。系统每周一自动生成销售报告。",
+      "expected": [
+        { "id": "p069", "canonical": "客户自动化项目使用 CSV 导入线索。", "valueTerms": ["CSV"] },
+        { "id": "p070", "canonical": "跟进到期前二十四小时必须提醒。", "valueTerms": ["二十四小时", "24小时"] },
+        { "id": "p071", "canonical": "客户状态分为新线索、跟进中和已成交。", "valueTerms": ["新线索", "跟进中", "已成交"] },
+        { "id": "p072", "canonical": "系统每周一自动生成销售报告。", "valueTerms": ["每周一", "销售报告"] }
+      ]
+    },
+    {
+      "id": "positive-19-embedded",
+      "text": "我的第一块学习板固定选 ESP32-S3。嵌入式项目使用 PlatformIO。固件主要用 C++ 编写。设备和服务之间固定通过 MQTT 通信。",
+      "expected": [
+        { "id": "p073", "canonical": "用户的第一块学习板选择 ESP32-S3。", "valueTerms": ["ESP32-S3"] },
+        { "id": "p074", "canonical": "用户的嵌入式项目使用 PlatformIO。", "valueTerms": ["PlatformIO"] },
+        { "id": "p075", "canonical": "用户的固件主要使用 C++ 编写。", "valueTerms": ["C++"] },
+        { "id": "p076", "canonical": "设备和服务之间使用 MQTT 通信。", "valueTerms": ["MQTT"] }
+      ]
+    },
+    {
+      "id": "positive-20-content",
+      "text": "我的内容主阵地长期是小红书。每周固定发布三篇。文案风格保持真实、简短、可执行。封面统一使用三比四的竖图。",
+      "expected": [
+        { "id": "p077", "canonical": "用户的内容主阵地是小红书。", "valueTerms": ["小红书"] },
+        { "id": "p078", "canonical": "用户每周固定发布三篇内容。", "valueTerms": ["每周三篇", "每周发布三篇", "3篇"] },
+        { "id": "p079", "canonical": "用户的文案风格保持真实、简短、可执行。", "valueTerms": ["真实", "简短", "可执行"] },
+        { "id": "p080", "canonical": "用户的封面统一使用三比四竖图。", "valueTerms": ["三比四", "3:4"] }
+      ]
+    },
+    {
+      "id": "positive-21-commercial",
+      "text": "我的报价默认有效七天。开发项目启动前固定收取百分之三十定金。发票统一在每月五号开具。对外报价默认使用人民币。",
+      "expected": [
+        { "id": "p081", "canonical": "用户的报价默认有效七天。", "valueTerms": ["七天", "7天"] },
+        { "id": "p082", "canonical": "用户在开发项目启动前收取百分之三十定金。", "valueTerms": ["百分之三十", "30%"] },
+        { "id": "p083", "canonical": "用户统一在每月五号开具发票。", "valueTerms": ["每月五号", "每月5号"] },
+        { "id": "p084", "canonical": "用户的对外报价默认使用人民币。", "valueTerms": ["人民币"] }
+      ]
+    },
+    {
+      "id": "positive-22-calendar",
+      "text": "我的日程统一按上海时区安排。上午九点前不要安排会议。每天下午两点到四点固定作为专注时间。每周五下午做下一周计划。",
+      "expected": [
+        { "id": "p085", "canonical": "用户的日程按上海时区安排。", "valueTerms": ["上海时区"] },
+        { "id": "p086", "canonical": "用户要求上午九点前不安排会议。", "valueTerms": ["上午九点前", "9点前"] },
+        { "id": "p087", "canonical": "用户每天下午两点到四点安排专注时间。", "valueTerms": ["下午两点到四点", "14:00", "16:00"] },
+        { "id": "p088", "canonical": "用户每周五下午做下一周计划。", "valueTerms": ["每周五下午", "下一周计划"] }
+      ]
+    },
+    {
+      "id": "positive-23-data",
+      "text": "业务数据每天凌晨两点自动备份。备份默认保留三十天。客户列表必须支持导出 CSV。永久删除前必须二次确认。",
+      "expected": [
+        { "id": "p089", "canonical": "业务数据每天凌晨两点自动备份。", "valueTerms": ["凌晨两点", "02:00"] },
+        { "id": "p090", "canonical": "备份默认保留三十天。", "valueTerms": ["三十天", "30天"] },
+        { "id": "p091", "canonical": "客户列表必须支持导出 CSV。", "valueTerms": ["CSV"] },
+        { "id": "p092", "canonical": "永久删除前必须二次确认。", "valueTerms": ["二次确认"] }
+      ]
+    },
+    {
+      "id": "positive-24-privacy",
+      "text": "用户记忆默认只保存在本机。产品不允许收集匿名遥测。所有服务密钥必须从环境变量读取。日志中必须遮蔽个人信息。",
+      "expected": [
+        { "id": "p093", "canonical": "用户记忆默认只保存在本机。", "valueTerms": ["本机", "本地"] },
+        { "id": "p094", "canonical": "产品不允许收集匿名遥测。", "valueTerms": ["匿名遥测", "遥测"] },
+        { "id": "p095", "canonical": "所有服务密钥必须从环境变量读取。", "valueTerms": ["环境变量"] },
+        { "id": "p096", "canonical": "日志中必须遮蔽个人信息。", "valueTerms": ["遮蔽个人信息", "个人信息"] }
+      ]
+    },
+    {
+      "id": "positive-25-airi",
+      "text": "我的 AIRI 助手名字固定叫小桥。AIRI 回答前必须自动召回相关记忆。不确定的信息必须先向我确认。长期记忆的原始证据必须一直可追溯。",
+      "expected": [
+        { "id": "p097", "canonical": "用户的 AIRI 助手名字是小桥。", "valueTerms": ["小桥"] },
+        { "id": "p098", "canonical": "AIRI 回答前必须自动召回相关记忆。", "valueTerms": ["自动召回"] },
+        { "id": "p099", "canonical": "AIRI 对不确定的信息必须先向用户确认。", "valueTerms": ["先向我确认", "向用户确认", "确认"] },
+        { "id": "p100", "canonical": "长期记忆的原始证据必须一直可追溯。", "valueTerms": ["原始证据", "可追溯"] }
+      ]
+    },
+    {
+      "id": "positive-26-explicit-tools",
+      "text": "我的默认终端固定使用 iTerm2。我的默认浏览器固定使用 Chrome。我的笔记工具固定使用 Obsidian。我的任务管理工具固定使用 Linear。",
+      "expected": [
+        { "id": "p101", "canonical": "用户的默认终端是 iTerm2。", "valueTerms": ["iTerm2"] },
+        { "id": "p102", "canonical": "用户的默认浏览器是 Chrome。", "valueTerms": ["Chrome"] },
+        { "id": "p103", "canonical": "用户的笔记工具是 Obsidian。", "valueTerms": ["Obsidian"] },
+        { "id": "p104", "canonical": "用户的任务管理工具是 Linear。", "valueTerms": ["Linear"] }
+      ]
+    },
+    {
+      "id": "positive-27-explicit-process",
+      "text": "所有代码提交前必须运行单元测试。所有数据库迁移前必须完成备份。所有生产发布必须经过人工确认。所有故障复盘必须记录根因。",
+      "expected": [
+        { "id": "p105", "canonical": "代码提交前必须运行单元测试。", "valueTerms": ["单元测试"] },
+        { "id": "p106", "canonical": "数据库迁移前必须完成备份。", "valueTerms": ["完成备份", "备份"] },
+        { "id": "p107", "canonical": "生产发布必须经过人工确认。", "valueTerms": ["人工确认"] },
+        { "id": "p108", "canonical": "故障复盘必须记录根因。", "valueTerms": ["记录根因", "根因"] }
+      ]
+    }
+  ],
+  "negativeCases": [
+    {
+      "id": "credential-01",
+      "category": "credential",
+      "sampleCount": 5,
+      "text": "以下都是用于安全测试的假数据，不得保存：密码 DEMO_ONLY_PASSWORD_01；验证码 000001；API Key DEMO_ONLY_API_KEY_01；access token DEMO_ONLY_ACCESS_TOKEN_01；Cookie DEMO_ONLY_COOKIE_01。"
+    },
+    {
+      "id": "credential-02",
+      "category": "credential",
+      "sampleCount": 5,
+      "text": "请不要记忆这些虚构凭据：口令 DEMO_ONLY_PASSPHRASE_02；验证码 000002；refresh token DEMO_ONLY_REFRESH_TOKEN_02；Bearer DEMO_ONLY_BEARER_02；私钥 DEMO_ONLY_PRIVATE_KEY_02。"
+    },
+    {
+      "id": "credential-03",
+      "category": "credential",
+      "sampleCount": 5,
+      "text": "安全演练文本：密码 DEMO_ONLY_PASSWORD_03、验证码 000003、API_KEY DEMO_ONLY_API_KEY_03、client secret DEMO_ONLY_SECRET_03、private key DEMO_ONLY_PRIVATE_KEY_03，全部是假的且不能进入记忆。"
+    },
+    {
+      "id": "credential-04",
+      "category": "credential",
+      "sampleCount": 5,
+      "text": "这些仅是阻断测试样本：口令 DEMO_ONLY_PASSPHRASE_04；验证码 000004；ACCESS-TOKEN DEMO_ONLY_ACCESS_TOKEN_04；REFRESH-TOKEN DEMO_ONLY_REFRESH_TOKEN_04；Cookie DEMO_ONLY_COOKIE_04。"
+    },
+    {
+      "id": "quotation-01",
+      "category": "quotation",
+      "sampleCount": 4,
+      "text": "我只是引用四句话，并不代表我自己：书里写着“作者每天五点起床”；帖子说“发帖人只用 Vim”；电影台词是“我永远住在巴黎”；广告声称“人人最爱蓝色”。"
+    },
+    {
+      "id": "sarcasm-01",
+      "category": "sarcasm",
+      "sampleCount": 4,
+      "text": "下面全是反话，不是我的真实偏好：我可太喜欢凌晨三点开会了；堵车两小时真让我快乐；程序每次崩溃都棒极了；一天收到一百封垃圾邮件简直完美。"
+    },
+    {
+      "id": "denial-01",
+      "category": "denial",
+      "sampleCount": 4,
+      "text": "请识别这些否认：别人说我住北京，但那不是事实；有人猜我用 Emacs，我明确否认；传言我每天喝酒，这完全不对；有人说我讨厌猫，我从没这样说过。"
+    },
+    {
+      "id": "hypothetical-01",
+      "category": "hypothetical",
+      "sampleCount": 4,
+      "text": "这些都只是假设：如果我搬去成都也许会骑车；假如以后创业可能使用 Go；要是养狗或许叫它旺财；如果中了大奖可能每天旅行。"
+    },
+    {
+      "id": "third-party-01",
+      "category": "third-party",
+      "sampleCount": 4,
+      "text": "这些都是别人的事实：小王住在深圳；李老师主要用 PyCharm；我的同事最爱喝拿铁；邻居家的猫叫雪球。"
+    }
+  ],
+  "conflictGroups": [
+    {
+      "id": "conflict-unconfirmed",
+      "expectedRelation": "contradicts",
+      "explicitCorrection": false,
+      "cases": [
+        ["主要编辑器", "VS Code", "Cursor"],
+        ["当前居住城市", "北京", "上海"],
+        ["默认浏览器", "Chrome", "Firefox"],
+        ["主要手机系统", "Android", "iOS"],
+        ["工作时区", "Asia/Shanghai", "Europe/London"],
+        ["首选数据库", "PostgreSQL", "MySQL"],
+        ["前端框架", "React", "Vue"],
+        ["包管理器", "pnpm", "npm"],
+        ["云部署区域", "新加坡", "东京"],
+        ["代码格式化工具", "Prettier", "Biome"],
+        ["默认终端", "iTerm2", "Alacritty"],
+        ["主要编程语言", "TypeScript", "Go"],
+        ["当前职业", "后端工程师", "产品经理"],
+        ["常用操作系统", "macOS", "Linux"],
+        ["笔记工具", "Obsidian", "Notion"],
+        ["任务管理工具", "Linear", "Jira"],
+        ["默认会议软件", "Zoom", "Teams"],
+        ["首选搜索引擎", "Google", "Bing"],
+        ["日志格式", "JSON", "纯文本"],
+        ["测试框架", "Vitest", "Jest"]
+      ]
+    },
+    {
+      "id": "conflict-explicit-correction",
+      "expectedRelation": "supersedes",
+      "explicitCorrection": true,
+      "cases": [
+        ["主要编辑器", "VS Code", "Cursor"],
+        ["当前居住城市", "杭州", "上海"],
+        ["默认浏览器", "Safari", "Chrome"],
+        ["主要手机系统", "iOS", "Android"],
+        ["工作时区", "Asia/Tokyo", "Asia/Shanghai"],
+        ["首选数据库", "MySQL", "PostgreSQL"],
+        ["前端框架", "Vue", "React"],
+        ["包管理器", "npm", "pnpm"],
+        ["云部署区域", "东京", "新加坡"],
+        ["代码格式化工具", "Prettier", "Biome"],
+        ["默认终端", "Terminal", "iTerm2"],
+        ["主要编程语言", "JavaScript", "TypeScript"],
+        ["当前职业", "前端工程师", "后端工程师"],
+        ["常用操作系统", "Windows", "macOS"],
+        ["笔记工具", "Notion", "Obsidian"],
+        ["任务管理工具", "Trello", "Linear"],
+        ["默认会议软件", "Teams", "Zoom"],
+        ["首选搜索引擎", "Bing", "Google"],
+        ["日志格式", "纯文本", "JSON"],
+        ["测试框架", "Jest", "Vitest"]
+      ]
+    },
+    {
+      "id": "conflict-temporal-coexistence",
+      "expectedRelation": "coexists",
+      "explicitCorrection": false,
+      "targetValidFrom": "2024-01-01T00:00:00.000Z",
+      "targetValidTo": "2025-01-01T00:00:00.000Z",
+      "candidateValidFrom": "2025-01-01T00:00:00.000Z",
+      "cases": [
+        ["居住城市", "杭州", "上海"],
+        ["主要编辑器", "VS Code", "Cursor"],
+        ["当前职位", "工程师", "技术主管"],
+        ["默认浏览器", "Firefox", "Chrome"],
+        ["主要电脑", "ThinkPad", "MacBook Pro"],
+        ["工作时区", "Europe/London", "Asia/Shanghai"],
+        ["项目数据库", "MySQL", "PostgreSQL"],
+        ["前端框架", "Vue", "React"],
+        ["手机系统", "iOS", "Android"],
+        ["笔记工具", "Notion", "Obsidian"]
+      ]
+    }
+  ],
+  "duplicateGroups": [
+    {
+      "id": "duplicate-editor",
+      "kind": "preference",
+      "subject": "用户",
+      "targetPredicate": "常用代码编辑器",
+      "candidatePredicate": "代码编辑器使用偏好",
+      "targetTemplate": "用户常用的代码编辑器是 {{value}}。",
+      "candidateTemplate": "用户的代码编辑器使用偏好是 {{value}}。",
+      "values": ["VS Code", "Cursor", "Vim", "Neovim", "Emacs", "Sublime Text", "Zed", "WebStorm", "IntelliJ IDEA", "PyCharm", "Android Studio", "Xcode", "Eclipse", "Visual Studio", "Kate", "Notepad++", "Helix", "Fleet", "Nova", "TextMate"]
+    },
+    {
+      "id": "duplicate-language",
+      "kind": "preference",
+      "subject": "用户",
+      "targetPredicate": "回复语言偏好",
+      "candidatePredicate": "偏好的回答语言",
+      "targetTemplate": "用户的回复语言偏好是 {{value}}。",
+      "candidateTemplate": "用户偏好的回答语言是 {{value}}。",
+      "values": ["中文", "英文", "日文", "韩文", "法文", "德文", "西班牙文", "葡萄牙文", "意大利文", "俄文", "阿拉伯文", "粤语", "普通话", "繁体中文", "简体中文", "中英双语", "英日双语", "中文夹英文术语", "简洁中文", "正式英文"]
+    },
+    {
+      "id": "duplicate-theme",
+      "kind": "preference",
+      "subject": "用户",
+      "targetPredicate": "界面主题偏好",
+      "candidatePredicate": "偏好的界面主题",
+      "targetTemplate": "用户的界面主题偏好是 {{value}}。",
+      "candidateTemplate": "用户偏好的界面主题是 {{value}}。",
+      "values": ["深色模式", "浅色模式", "跟随系统", "高对比度深色", "高对比度浅色", "纯黑主题", "暖色主题", "冷色主题", "低对比度主题", "护眼主题", "蓝色主题", "绿色主题", "灰色主题", "午夜主题", "日间主题", "自动切换主题", "无动画主题", "大字体主题", "极简主题", "彩色主题"]
+    },
+    {
+      "id": "duplicate-transport",
+      "kind": "preference",
+      "subject": "用户",
+      "targetPredicate": "出行交通偏好",
+      "candidatePredicate": "偏好的出行方式",
+      "targetTemplate": "用户的出行交通偏好是 {{value}}。",
+      "candidateTemplate": "用户偏好的出行方式是 {{value}}。",
+      "values": ["高铁", "地铁", "公交车", "自行车", "步行", "出租车", "网约车", "飞机", "火车", "自驾", "电动车", "轮渡", "城际列车", "有轨电车", "共享单车", "长途汽车", "磁悬浮", "轻轨", "摩托车", "拼车"]
+    },
+    {
+      "id": "duplicate-beverage",
+      "kind": "preference",
+      "subject": "用户",
+      "targetPredicate": "日常饮品偏好",
+      "candidatePredicate": "偏好的日常饮品",
+      "targetTemplate": "用户的日常饮品偏好是 {{value}}。",
+      "candidateTemplate": "用户偏好的日常饮品是 {{value}}。",
+      "values": ["美式咖啡", "拿铁", "卡布奇诺", "浓缩咖啡", "摩卡", "绿茶", "红茶", "乌龙茶", "白茶", "普洱茶", "柠檬水", "气泡水", "温水", "豆浆", "牛奶", "燕麦奶", "椰子水", "热巧克力", "花草茶", "无糖可乐"]
+    }
+  ]
+}

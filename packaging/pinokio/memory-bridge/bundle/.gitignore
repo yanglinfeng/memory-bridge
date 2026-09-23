@@ -1,0 +1,16 @@
+node_modules/
+dist/
+data/
+.env
+.DS_Store
+.firecrawl/
+coverage/
+playwright-report/
+test-results/
+.memory-bridge-private/
+logs/
+
+# 无关的 Godot 游戏项目，独立管理，不纳入忆桥仓库
+action-game/
+side-scroller-game/
+third-person-rpg/

@@ -1,0 +1,4 @@
+app/
+state/
+.app.stage-*/
+.app.rollback/

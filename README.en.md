@@ -84,6 +84,34 @@ Wire it into any MCP client (Claude Desktop, Cline, …):
 }
 ```
 
+### Examples
+
+Three **zero-build, directly runnable** examples (curl / Node / Java) cover writes (including
+`corpusDomain` / `classification`), idempotent replay, recall, `supersede` revisions and
+point-in-time (as-of) queries:
+
+```bash
+export MB_TOKEN=your-token        # see examples/README.md §1
+
+bash examples/curl/quickstart.sh
+node examples/node/quickstart.mjs
+java examples/java/QuickStart.java      # JDK 17+, no dependencies
+```
+
+See [examples/README.md](examples/README.md) (Chinese).
+
+### Docs consistency
+
+Facts declared in the docs — schema version, environment variables, npm scripts, HTTP routes,
+config defaults — can be diffed against the code in one command:
+
+```bash
+npm run check:docs
+```
+
+It fails with a non-zero exit code on any mismatch, so it is worth re-running before a release
+and after any large change. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
 Full installation, operations, API and troubleshooting docs start at
 [docs/README.md](docs/README.md) (Chinese; English guides are on the roadmap).
 

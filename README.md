@@ -84,6 +84,32 @@ npm start          # HTTP 服务 + 管理台：http://127.0.0.1:3789
 }
 ```
 
+### 接入示例
+
+三个**零构建、可直接运行**的最小示例（curl / Node / Java），覆盖写入（含 `corpusDomain` /
+`classification`）、幂等重放、召回、`supersede` 改版与时序对照查询：
+
+```bash
+export MB_TOKEN=你的令牌        # 见 examples/README.md §1
+
+bash examples/curl/quickstart.sh
+node examples/node/quickstart.mjs
+java examples/java/QuickStart.java      # JDK 17+，零依赖
+```
+
+详见 [examples/README.md](examples/README.md)。
+
+### 文档一致性
+
+文档里声明的 schema 版本、环境变量、npm 脚本、HTTP 路由与配置默认值，可以和代码事实一键对撞：
+
+```bash
+npm run check:docs
+```
+
+它会把「文档说的」与「代码里的」逐项比对并在不一致时以非零退出码失败，适合在发布前与每次
+大改后重跑。见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+
 完整安装、运维、接口与排障文档从 [docs/README.md](docs/README.md) 进入。
 
 ## 评测
@@ -109,7 +135,8 @@ npm start          # HTTP 服务 + 管理台：http://127.0.0.1:3789
 ## Roadmap
 
 - [ ] `BENCHMARKS.md`：公开基准的完整条件与一键复现脚本
-- [ ] `CHANGELOG.md` / `CONTRIBUTING.md` / `SECURITY.md` 社区四件套
+- [x] 社区四件套：`CONTRIBUTING.md` / `SECURITY.md` / `CHANGELOG.md` / `CODE_OF_CONDUCT.md`，附 `.env.example` 与 `examples/`（curl / Node / Java）
+- [ ] 清掉 3 例预存在的失败用例（迁移备份与写锁顺序 1 例、`test:lifecycle` doctor 2 例）
 - [ ] `supersede` 时补写 `valid_to`，并补 as-of 查询的回归测试
 - [x] 英文入口 `README.en.md`（核心指南英文版仍待补）
 - [ ] 文档解析深度：推荐接入 RAGFlow / Docling 等上游，忆桥专注其上的可信层

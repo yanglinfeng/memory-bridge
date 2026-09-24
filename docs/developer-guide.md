@@ -27,7 +27,12 @@ npm run dev
 |---|---|
 | `src/server/index.ts` | 依赖装配、启动、Worker、安全关闭 |
 | `src/server/config.ts` | 环境变量、默认值和安全范围 |
-| `src/server/database.ts` | schema 37、迁移、备份与 attestation |
+| `src/server/database.ts` | 迁移编排、迁移备份与 attestation、evidence 完整性扫描 |
+| `src/server/schema-sql.ts` | 表/索引/触发器 SQL 常量（v26–v39 存量块） |
+| `src/server/migrations/` | 44 个注册式迁移步骤（`vNN-*.ts`），版本号即注册顺序 |
+| `src/server/schema-migration-ledger.ts` | 迁移账本与 schema 指纹 |
+| `src/server/sqlite-schema-helpers.ts` | 列/表存在性探测等 SQLite 元数据助手 |
+| `src/server/schema-integrity.ts` | schema 完整性断言与身份边界校验 |
 | `src/server/http-server.ts` | HTTP API、静态文件、身份边界 |
 | `src/server/mcp-server.ts` | 七个 MCP 工具协议 |
 | `src/server/mcp-stdio.ts` | MCP principal 固定与 stdio transport |
@@ -36,8 +41,8 @@ npm run dev
 
 | 文件 | 所有权 |
 |---|---|
-| `airi-memory-lifecycle.ts` | 回答前召回、回答后入账、自然意图快车道 |
-| `airi-ollama-compat.ts` | AIRI OpenAI/Ollama 兼容代理 |
+| `memory-lifecycle.ts` | 回答前召回、回答后入账、自然意图快车道 |
+| `ollama-compat.ts` | OpenAI/Ollama 兼容与生命周期代理 |
 | `contextual-query-understanding.ts` | 有界历史、结构化消歧、single-flight 和安全澄清 |
 | `memory-journal.ts` | 版本、证据、事件、tombstone |
 | `lifecycle-store.ts` | session/turn/outbox/job/dead letter |
@@ -50,6 +55,9 @@ npm run dev
 | `candidate-resolver.ts` | 候选关系、冲突和版本解析 |
 | `claim-relation-classifier.ts` | LLM 五路关系判断 |
 | `memory-store.ts` | 当前投影、规范写入、召回、备份恢复 |
+| `memory-store-*.ts` | 存储层拆出的辅助模块：`utils` / `text` / `temporal` / `query-planning` / `schemas` / `types` / `backup` |
+| `conversation-types.ts` | Conversation 公共类型契约 |
+| `conversation-internals.ts` | Conversation 私有基础设施 |
 | `hybrid-retrieval.ts` | FTS/ANN/term/graph 与 Dense generation |
 | `semantic-ranker.ts` | embedding、批量严格重排 |
 | `memory-consolidator.ts` | 来源约束的派生摘要 |
@@ -181,7 +189,7 @@ SQL 字符串值使用绑定参数或单引号，不要把双引号字符串误�
 | identity/scope | `identity.test.ts`、`memory-scope-security.test.ts`、multitenant tests |
 | HTTP | `http-server.test.ts`、`http-multitenant.test.ts`、identity management tests |
 | MCP | `mcp-stdio.test.ts` |
-| lifecycle | `airi-memory-lifecycle.test.ts`、`airi-ollama-compat.test.ts` |
+| lifecycle | `memory-lifecycle.test.ts`、`ollama-compat.test.ts` |
 | candidate/relation | candidate、claim-relation、explicit-intent tests |
 | retrieval | hybrid、semantic、dense、namespace、observability tests |
 | contextual query | `contextual-query-understanding.test.ts`、lifecycle context recall tests |

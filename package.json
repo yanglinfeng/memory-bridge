@@ -50,6 +50,7 @@
     "soak:reliability": "npm run build:server && node scripts/soak-reliability.mjs",
     "verify:crash-recovery": "npm run build:server && node scripts/verify-crash-recovery.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.server.json --noEmit",
+    "check:docs": "node scripts/check-docs-consistency.mjs",
     "test": "npm run build:server && node --test --import tsx tests/**/*.test.ts tests/**/*.test.mjs",
     "pretest": "npm run bundle:pinokio"
   },

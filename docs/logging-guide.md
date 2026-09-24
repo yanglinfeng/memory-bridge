@@ -363,7 +363,7 @@ curl -sS "$BASE/api/reflection/runs/$RUN_ID" \
 兼容层以严格行首输出脱敏 JSON：
 
 ```text
-[airi-ollama-compat] {"action":"proxy_result","requestId":"...","result":"success","retrievalTraceId":"..."}
+[ollama-compat] {"action":"proxy_result","requestId":"...","result":"success","retrievalTraceId":"..."}
 ```
 
 与长期记忆回答直接相关的 action：

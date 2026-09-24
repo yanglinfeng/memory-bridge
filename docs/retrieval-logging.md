@@ -209,7 +209,7 @@ retrieval trace 证明“系统找到了什么”，compat audit 证明“用户
 
 ```text
 HTTP requestId
-  → [airi-ollama-compat] requestId
+  → [ollama-compat] requestId
   → zero_recall_abstention / grounded_recall_repair
   → retrievalTraceId
   → SQLite request.correlationIdHash (requestId 的 SHA-256，不保存原文)

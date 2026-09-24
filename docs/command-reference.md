@@ -22,6 +22,7 @@
 | `npm run lifecycle:business-hash -- --database FILE` | 只读计算 lifecycle 业务逻辑哈希 | 仅输出计数和哈希；不输出正文、Token 或身份值 |
 | `npm run prepare:airi-acceptance` | 创建隔离 AIRI 验收环境 | 正式验收先设置持久私有父目录；不应指向正式 profile |
 | `npm run typecheck` | 前后端 TypeScript 类型检查 | 不写构建产物 |
+| `npm run check:docs` | 文档 ↔ 代码一致性对撞（schema 口径、环境变量 / npm 脚本 / HTTP 路由覆盖度、文档引用的源码路径、配置默认值、合规文件、评测分数残留） | 失败时退出码为 1；发布前与每次大改后重跑 |
 | `npm test` | 构建服务端并运行全自动化 | Node test runner |
 | `npm run benchmark:rerank` | 真实模型重排 benchmark | Ollama |
 | `npm run benchmark:scale -- --receipt PATH` | 规模 benchmark | 使用隔离数据并原子保存 JSON 回执 |

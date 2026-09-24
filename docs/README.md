@@ -16,6 +16,17 @@ stdio。首次启动为空数据，不包含演示记忆。
 | 安全负责人 | [安全与隐私](security-and-privacy.md) → [数据模型](data-model.md) → [日志总览](logging-guide.md) |
 | 开发人员 | [技术实现](technical-reference.md) → [数据模型](data-model.md) → [开发指南](developer-guide.md) → [测试发布](testing-and-release.md) |
 
+## 仓库根目录入口
+
+| 文件 | 用途 |
+|---|---|
+| [CONTRIBUTING.md](../CONTRIBUTING.md) | 环境要求、开发循环、代码与提交约定、已知失败用例 |
+| [SECURITY.md](../SECURITY.md) | 漏洞报告通道、支持版本、威胁模型与部署红线 |
+| [CHANGELOG.md](../CHANGELOG.md) | 版本变更记录（含默认值变更与已知限制） |
+| [CODE_OF_CONDUCT.md](../CODE_OF_CONDUCT.md) | 贡献者行为准则 |
+| [.env.example](../.env.example) | 可复制的环境变量清单（含默认值与加载方式） |
+| [examples/](../examples/README.md) | 零构建接入示例：curl / Node / Java |
+
 ## 用户与接入文档
 
 | 文档 | 内容 |

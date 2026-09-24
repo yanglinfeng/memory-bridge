@@ -403,9 +403,12 @@ SQLite 备份；v26 关键结构还会验证列、索引、触发器 SQL 和 led
 | `src/server/conversation-service.ts` | 会话、消息、round、change、删除、导入和 Doctor |
 | `src/server/conversation-chat.ts` | beforeModel、provider 流式、完成/失败事务和审计 |
 | `src/server/assistant-protocol.ts` | 展示正文与结构化动作的完整/增量清洗 |
-| `src/server/airi-ollama-compat.ts` | OpenAI/Ollama 兼容与生命周期代理 |
-| `src/server/airi-memory-lifecycle.ts` | 回答前/后记忆编排 |
+| `src/server/ollama-compat.ts` | OpenAI/Ollama 兼容与生命周期代理 |
+| `src/server/memory-lifecycle.ts` | 回答前/后记忆编排 |
 | `src/server/memory-store.ts` | 规范记忆、可靠召回、备份与投影 |
+| `src/server/memory-store-*.ts` | 存储层辅助模块：`utils` / `text` / `temporal` / `query-planning` / `schemas` / `types` / `backup` |
+| `src/server/conversation-types.ts` | Conversation 公共类型契约 |
+| `src/server/conversation-internals.ts` | Conversation 私有基础设施 |
 | `src/server/lifecycle-store.ts` | 会话、outbox、jobs 和 dead letter |
 | `src/server/hybrid-retrieval.ts` | 混合检索与 Dense generation |
 | `src/server/semantic-ranker.ts` | embedding 和严格批量重排 |
@@ -416,7 +419,12 @@ SQLite 备份；v26 关键结构还会验证列、索引、触发器 SQL 和 led
 | `src/server/hierarchical-summary-service.ts` | session/day/week 层级摘要的生成、来源绑定与失效 |
 | `src/server/answer-tools.ts` | 答案工具（calculator / date_diff / date_shift）与弃答联动 |
 | `src/server/trusted-sessions.ts` | 可信会话签发、授权矩阵解析、密级与部门级隔离判定 |
-| `src/server/database.ts` | schema、迁移、触发器规范 attestation 和 evidence 完整性扫描 |
+| `src/server/database.ts` | 迁移编排、迁移备份与 attestation、evidence 完整性扫描 |
+| `src/server/schema-sql.ts` | 表/索引/触发器 SQL 常量（v26–v39 存量块） |
+| `src/server/migrations/` | 44 个注册式迁移步骤（`vNN-*.ts`），版本号即注册顺序 |
+| `src/server/schema-migration-ledger.ts` | 迁移账本与 schema 指纹 |
+| `src/server/sqlite-schema-helpers.ts` | 列/表存在性探测等 SQLite 元数据助手 |
+| `src/server/schema-integrity.ts` | schema 完整性断言与身份边界校验 |
 
 ## 15. 不应误解的边界
 

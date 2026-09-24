@@ -41,13 +41,21 @@
 - `docs/developer-guide.md` / `docs/technical-reference.md` 的源文件索引补齐存储层与 schema 层
   拆分出的模块（`memory-store-*.ts`、`migrations/`、`schema-sql.ts`、`schema-migration-ledger.ts`、
   `sqlite-schema-helpers.ts`、`schema-integrity.ts`、`conversation-{types,internals}.ts`）。
+- 迁移备份与写锁之间的无锁窗口不再无保护。备份因技术限制必须在 `BEGIN IMMEDIATE` 之前完成
+  （第二连接的 `wal_checkpoint(TRUNCATE)` 在主连接持写事务时无法完成），该窗口内的并发写
+  本不会被写锁挡住。现于取锁后立即复检数据库文件家族（主库 + `-wal` + `-journal`）的身份，
+  发现漂移即 fail-closed 拒绝迁移，避免用过期快照回滚。
+  判据必须包含 `-wal`：**WAL 模式下并发写不落主库文件**（实测主库 size / mtime / inode 三项
+  全不变，只把 WAL 撑大），只查主库会漏判；`-shm` 因只读访问也会被改写而不纳入判据。
 
 ### 已知问题
 
-- `tests/database.test.ts` 有 1 例失败：迁移备份与 `BEGIN IMMEDIATE` 写锁的顺序断言。备份被有意
-  挪到取写锁之前（避免第二连接 `wal_checkpoint(TRUNCATE)` 在主连接持写事务时无法完成），但
-  "冷启动无并发写者"这一前提缺少机制保证，守卫测试与设计脱节。**预存在，非回归。**
-- `npm run test:lifecycle` 有 2 例 doctor 失败。**预存在，非回归。**
+- 无未决的测试红灯。此前登记的两条已全部收口：
+
+  - 迁移备份的写锁顺序缺口已修（见上方修复条目），守卫测试改为验证新的复检机制。
+  - `npm run test:lifecycle` 的 2 例 doctor 失败经查为**运行环境不满足 `engines`**：doctor 的
+    `runtime.node` 检查要求 Node ≥ 24，用 Node 22 运行必然判 fail 并连带拉低 `daily.passed`，
+    被测的 warn / info 逻辑其实完全正常。换用满足要求的解释器即 **36/36 通过**，非代码缺陷。
 
 ---
 

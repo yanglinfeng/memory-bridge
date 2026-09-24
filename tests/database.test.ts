@@ -2665,7 +2665,7 @@ test('旧 v25 补造 project_id 和同名索引后仍不能冒充可信 v26', ()
   }
 });
 
-test('迁移备份在 BEGIN IMMEDIATE 写锁内生成，fail-closed 快照不存在 TOCTOU', () => {
+test('迁移备份在取锁后复检文件家族，备份窗口内出现并发写时 fail-closed 拒绝迁移', () => {
   const directory = fs.mkdtempSync(
     path.join(os.tmpdir(), 'memory-bridge-v26-backup-lock-'),
   );
@@ -2696,7 +2696,8 @@ test('迁移备份在 BEGIN IMMEDIATE 写锁内生成，fail-closed 快照不存
     `);
     current.close();
 
-    let competingWriteBlocked = false;
+    // 备份完成到取得写锁之间没有写锁保护，并发写会成功落库。
+    let competingWriteSucceeded = false;
     assert.throws(
       () => openDatabase(filePath, {
         testOnlyAfterMigrationBackup: () => {
@@ -2706,30 +2707,38 @@ test('迁移备份在 BEGIN IMMEDIATE 写锁内生成，fail-closed 快照不存
             competitor
               .prepare('UPDATE memories SET content = ? WHERE id = ?')
               .run(racedContent, legacyProjectMemory.id);
-          } catch (error) {
-            assert.match(
-              error instanceof Error ? error.message : String(error),
-              /database is locked|database is busy/iu,
-            );
-            competingWriteBlocked = true;
+            competingWriteSucceeded = true;
           } finally {
             competitor.close();
           }
         },
       }),
-      /schema v26.*project scope.*人工.*rebind/iu,
+      (error: unknown) => {
+        const message = error instanceof Error ? error.message : String(error);
+        assert.match(message, /检测到迁移备份之后、取得写锁之前的并发写入/u);
+        // 判据必须落在 -wal 上：WAL 模式下并发写不落主库文件
+        assert.match(message, /-wal 大小 \d+ → \d+ 字节/u);
+        return true;
+      },
     );
-    assert.equal(competingWriteBlocked, true);
+    // 该窗口本就没有写锁，竞争写必然成功——这正是取锁后必须复检的原因
+    assert.equal(competingWriteSucceeded, true);
 
+    // fail-closed：迁移整体未执行，库停在原 schema 上，并发写的内容保留原样
     const live = new DatabaseSync(filePath, { readOnly: true });
+    assert.equal(
+      Number(live.prepare('PRAGMA user_version').get()?.user_version),
+      25,
+    );
     assert.equal(
       live
         .prepare('SELECT content FROM memories WHERE id = ?')
         .get(legacyProjectMemory.id)?.content,
-      originalContent,
+      racedContent,
     );
     live.close();
 
+    // 备份快照仍是漂移发生之前的状态，可用于事后取证
     const backupDirectory = path.join(directory, 'migration-backups');
     const backupFiles = fs.readdirSync(backupDirectory);
     assert.equal(backupFiles.length, 1);

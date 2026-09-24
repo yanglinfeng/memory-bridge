@@ -83,16 +83,86 @@ export function openDatabase(
   return database;
 }
 
+interface SqliteFileIdentity {
+  size: number;
+  mtimeMs: number;
+  ino: number;
+}
+
+interface DatabaseFileFamilyIdentity {
+  name: string;
+  identity: SqliteFileIdentity | null;
+}
+
+interface MigrationBackup {
+  created: boolean;
+  backupPath: string | null;
+  identity: DatabaseFileFamilyIdentity[] | null;
+}
+
+// 数据库文件家族 = 主库 + WAL + rollback journal。
+// 必须连同 -wal 一起取值：WAL 模式下并发写不落主库文件（实测主库的
+// size/mtime/ino 三项全不变），只把 WAL 从 0 撑大，只查主库会漏判。
+// -shm 是共享内存索引、只读访问也会改写，故不纳入判据，避免误报。
+function captureDatabaseFileFamily(filePath: string): DatabaseFileFamilyIdentity[] {
+  return [filePath, `${filePath}-wal`, `${filePath}-journal`].map((target) => {
+    try {
+      const stat = fs.statSync(target);
+      return {
+        name: path.basename(target),
+        identity: { size: stat.size, mtimeMs: stat.mtimeMs, ino: stat.ino },
+      };
+    } catch {
+      return { name: path.basename(target), identity: null };
+    }
+  });
+}
+
+function describeFileFamilyDrift(
+  before: DatabaseFileFamilyIdentity[],
+  after: DatabaseFileFamilyIdentity[],
+): string[] {
+  const drift: string[] = [];
+  for (const [index, entry] of before.entries()) {
+    const then = entry.identity;
+    const now = after[index]?.identity ?? null;
+    if (then === null && now === null) continue;
+    if (then === null || now === null) {
+      drift.push(
+        `${entry.name} ${then === null ? '在备份后被创建' : '在备份后被删除'}`,
+      );
+      continue;
+    }
+    if (then.ino !== now.ino) {
+      drift.push(`${entry.name} 被替换（inode ${then.ino} → ${now.ino}）`);
+      continue;
+    }
+    if (then.size !== now.size) {
+      drift.push(`${entry.name} 大小 ${then.size} → ${now.size} 字节`);
+      continue;
+    }
+    if (then.mtimeMs !== now.mtimeMs) {
+      drift.push(`${entry.name} 修改时间被更新`);
+    }
+  }
+  return drift;
+}
+
 function backupBeforeMigration(
   filePath: string,
   observedVersion: number,
-): boolean {
-  if (filePath === ':memory:' || !fs.existsSync(filePath)) return false;
+): MigrationBackup {
+  const skipped: MigrationBackup = {
+    created: false,
+    backupPath: null,
+    identity: null,
+  };
+  if (filePath === ':memory:' || !fs.existsSync(filePath)) return skipped;
   if (
     observedVersion >= SCHEMA_VERSION ||
     fs.statSync(filePath).size === 0
   ) {
-    return false;
+    return skipped;
   }
 
   const backupDirectory = path.join(
@@ -127,7 +197,13 @@ function backupBeforeMigration(
   } finally {
     snapshotSource.close();
   }
-  return true;
+  // 身份快照必须在 checkpoint + 复制之后取：checkpoint 自身就会改写主库与 WAL。
+  // 这一刻的文件家族状态，正是 backupPath 里那份快照所对应的状态。
+  return {
+    created: true,
+    backupPath,
+    identity: captureDatabaseFileFamily(filePath),
+  };
 }
 
 function schemaVersion(database: DatabaseSync): number {
@@ -179,12 +255,11 @@ function migrate(
 
   // 迁移备份必须在 BEGIN IMMEDIATE 之前完成：node:sqlite 下第二连接的
   // VACUUM INTO 在主连接持有写事务时会抛 SQLITE_IOERR（disk I/O error）。
-  // openDatabase 冷启动场景没有并发写者，先备份再取锁语义等价。
-  const preLockBackupCreated = backupBeforeMigration(
-    filePath,
-    schemaVersion(database),
-  );
-  if (preLockBackupCreated) options.testOnlyAfterMigrationBackup?.();
+  // 代价是"备份完成 → 取得写锁"之间存在一个无锁窗口，该窗口内的并发写
+  // 不会被写锁挡住。补偿手段是取锁后立即复检数据库文件家族的身份：
+  // 一旦发现漂移就 fail-closed 拒绝迁移，绝不拿过期快照去回滚。
+  const backup = backupBeforeMigration(filePath, schemaVersion(database));
+  if (backup.created) options.testOnlyAfterMigrationBackup?.();
 
   withSqliteBusyRetry(
     () => database.exec('BEGIN IMMEDIATE'),
@@ -195,6 +270,20 @@ function migrate(
     },
   );
   try {
+    if (backup.identity) {
+      const drift = describeFileFamilyDrift(
+        backup.identity,
+        captureDatabaseFileFamily(filePath),
+      );
+      if (drift.length > 0) {
+        throw new Error(
+          `检测到迁移备份之后、取得写锁之前的并发写入（${drift.join('；')}）：` +
+            `快照 ${backup.backupPath} 已与数据库当前状态不一致。` +
+            `为避免后续用过期快照回滚，已 fail-closed 拒绝迁移。` +
+            `请在无并发写者的条件下重新打开数据库。`,
+        );
+      }
+    }
     let version = schemaVersion(database);
     assertSupportedSchemaVersion(version);
     if (version === SCHEMA_VERSION) {

@@ -206,6 +206,7 @@ import {
   semanticOperationTraceTelemetry,
   stableKeyForCreate,
   strongerSourceAuthority,
+  supersedeValidTo,
   temporalRangesOverlap,
   truncateToTokenBudget,
   validateValidityWindow,
@@ -1284,6 +1285,52 @@ export class MemoryStore {
     return Boolean(row);
   }
 
+  /**
+   * 取代一个记忆：状态置 superseded，并把有效期封口在 `memories` 与
+   * 当前版本 `memory_versions` **两张表**上。
+   *
+   * 两处必须同时更新——完整备份的一致性校验会逐字段对撞 projection 与当前版本
+   * （`memory-store-backup.ts` 的 `validateFullBackupState`，其中 `valid_to`
+   * 在列），只改一边会让导出的备份无法再导入。
+   *
+   * `closedValidTo` 为 null 时走 `COALESCE` 保留原值：窗口无法合法表达的情形
+   * （见 `supersedeValidTo`），此时保留原有 valid_to，不写入倒退的时间点。
+   *
+   * 返回 `memories` 受影响行数，调用方据此做乐观并发检查。
+   */
+  private closeSupersededProjection(
+    memoryId: string,
+    closedValidTo: string | null,
+    timestamp: string,
+    expected: { userId: string; requireActive?: boolean },
+  ): number {
+    const clauses = ['id = ?', 'user_id = ?'];
+    const values: SQLInputValue[] = [memoryId, expected.userId];
+    if (expected.requireActive) clauses.push(`status = 'active'`);
+    const update = this.database
+      .prepare(
+        `UPDATE memories
+         SET status = 'superseded',
+             valid_to = COALESCE(?, valid_to),
+             updated_at = ?
+         WHERE ${clauses.join(' AND ')}`,
+      )
+      .run(closedValidTo, timestamp, ...values);
+    if (Number(update.changes) === 1) {
+      this.database
+        .prepare(
+          `UPDATE memory_versions
+           SET valid_to = COALESCE(?, valid_to)
+           WHERE id = (
+             SELECT current_version_id FROM memory_items
+             WHERE id = ? AND user_id = ?
+           )`,
+        )
+        .run(closedValidTo, memoryId, expected.userId);
+    }
+    return Number(update.changes);
+  }
+
   remember(
     input: RememberInput,
     authorization?: TombstoneWriteAuthorization,
@@ -1599,13 +1646,17 @@ export class MemoryStore {
         if (!prior) {
           throw new Error('要替代的记忆不存在或不属于当前用户');
         }
-        this.database
-          .prepare(
-            `UPDATE memories
-             SET status = 'superseded', updated_at = ?
-             WHERE id = ?`,
-          )
-          .run(timestamp, input.supersedesId);
+        // bi-temporal 封口：被取代记忆的有效期终止于新记忆开始有效的那一刻。
+        // 显式落库后，as-of 可见性不再只靠 updated_at 回退判据（见 hybrid-retrieval
+        // 的 superseded 分支），历史窗口不会随通用列的刷新而漂移。
+        const closedValidTo = supersedeValidTo(
+          prior.validFrom,
+          validFrom,
+          timestamp,
+        );
+        this.closeSupersededProjection(input.supersedesId, closedValidTo, timestamp, {
+          userId,
+        });
         const superseded = this.get(
           input.supersedesId,
           true,
@@ -2491,14 +2542,20 @@ export class MemoryStore {
       }
       if (blockingConflicts.length > 0) {
         for (const conflict of blockingConflicts) {
-          const result = this.database
-            .prepare(
-              `UPDATE memories
-               SET status = 'superseded', updated_at = ?
-               WHERE id = ? AND user_id = ? AND status = 'active'`,
-            )
-            .run(timestamp, conflict.id, ownerId);
-          if (Number(result.changes) !== 1) {
+          // bi-temporal 封口：冲突记忆被恢复出的记忆取代，其有效期同样应在
+          // 继任者开始有效时终止（与 remember 的 supersedesId 路径保持一致）。
+          const closedValidTo = supersedeValidTo(
+            conflict.validFrom,
+            restored.validFrom,
+            timestamp,
+          );
+          const changed = this.closeSupersededProjection(
+            conflict.id,
+            closedValidTo,
+            timestamp,
+            { userId: ownerId, requireActive: true },
+          );
+          if (changed !== 1) {
             throw new Error('恢复目标已变化，请重新检查当前冲突');
           }
           const superseded = this.get(

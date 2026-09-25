@@ -325,6 +325,31 @@ export function validateValidityWindow(
   }
 }
 
+/**
+ * bi-temporal 封口：被取代记忆的 `valid_to` 应落在「继任者开始有效」的那一刻，
+ * 也就是继任者的 `valid_from`；继任者未声明 `valid_from` 时退回取代发生的时间。
+ *
+ * 为什么必须显式写：as-of 召回的可见性此前只靠 `hybrid-retrieval` 里
+ * `status = 'superseded' AND updated_at > ?` 这一条回退判据，而 `updated_at`
+ * 是通用列（其它写路径也会刷新它）。显式写 `valid_to` 后，历史窗口不再随
+ * `updated_at` 漂移——回退判据得以退居兜底位。
+ *
+ * 返回 `null` 表示**该窗口无法合法表达**（被取代记忆的 `valid_from` 已经
+ * 不早于继任者生效时刻，例如未来才生效就被取代），此时保持 `valid_to` 为
+ * NULL 并交出回退判据——不去钳制出一个会歪曲历史的时间点。
+ */
+export function supersedeValidTo(
+  priorValidFrom: string | null,
+  successorValidFrom: string | null,
+  supersededAt: string,
+): string | null {
+  const candidate = successorValidFrom || supersededAt;
+  if (priorValidFrom && Date.parse(priorValidFrom) >= Date.parse(candidate)) {
+    return null;
+  }
+  return candidate;
+}
+
 export function cleanTags(values: string[] | undefined): string[] {
   return [
     ...new Set(

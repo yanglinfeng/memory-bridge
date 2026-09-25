@@ -24,6 +24,7 @@ stdio。首次启动为空数据，不包含演示记忆。
 | [SECURITY.md](../SECURITY.md) | 漏洞报告通道、支持版本、威胁模型与部署红线 |
 | [CHANGELOG.md](../CHANGELOG.md) | 版本变更记录（含默认值变更与已知限制） |
 | [CODE_OF_CONDUCT.md](../CODE_OF_CONDUCT.md) | 贡献者行为准则 |
+| [BENCHMARKS.md](../BENCHMARKS.md) | 基准评测：四套评测的分工、前置、一键复现、口径、隔离保证与已知局限 |
 | [.env.example](../.env.example) | 可复制的环境变量清单（含默认值与加载方式） |
 | [examples/](../examples/README.md) | 零构建接入示例：curl / Node / Java |
 

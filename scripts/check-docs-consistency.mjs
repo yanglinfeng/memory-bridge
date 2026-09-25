@@ -49,8 +49,16 @@ function isHistorical(rel) {
   return base.startsWith('prd-') || base.startsWith('acceptance-report-');
 }
 
-/** 该文档是否声明了「不主张分数」 */
-const SCORE_ALLOWLIST = new Set(['sidecar/ce-rerank/README.md']);
+/**
+ * 允许出现评测数字的文档。**白名单不是免检**：文件里必须真的带上免责声明，
+ * 否则照旧判 FAIL —— 否则「把声明删掉」就能静默把整份文件的数字放行。
+ * 这样名单本身不用审，声明一消失门禁就红。
+ */
+const SCORE_ALLOWLIST = new Map([
+  ['sidecar/ce-rerank/README.md', [/本机单次实测快照/]],
+  ['BENCHMARKS.md', [/不主张任何分数/, /不是当前命令产出的/]],
+  ['docs/testing-and-release.md', [/不代表线上成功率/]],
+]);
 
 const results = [];
 function add(group, item, ok, detail = '') {
@@ -274,21 +282,47 @@ const nonHistMd = mdFiles.filter((p) => !isHistorical(rel(p)));
 }
 
 // ───────────────────────────────────────── 8. 不可复现的评测分数残留
+//
+// 判定「分数主张」而不是「提到数据集名」：只提数据集名（例如命令表里的
+// `bench:cmrc`、语料来源说明）不是分数主张，按名字报会造假阳性，而假阳性
+// 会让门禁被无视——那比不报更糟。
+//
+// 规则：同一行同时出现「分数形状的数字」与（数据集名 或 指标名）才报。
+// 指标名带词边界，否则 `EM` 会命中 `MEMORY_BRIDGE`。
 {
-  const scorePat = /(LongMemEval|HotpotQA|LoCoMo|CMRC)/;
+  const datasetPat = /(LongMemEval|HotpotQA|LoCoMo|CMRC)/;
+  const metricPat = /\b(?:Recall@\d+|R@\d+|MRR(?:@\d+)?|EM|F1|nDCG@\d+)\b/;
+  const numberPat = /\d+\.\d{2,}|\d+(?:\.\d+)?\s*%/;
   const hits = [];
+  const missingMarkers = [];
   for (const p of mdFiles) {
     const r = rel(p);
-    if (SCORE_ALLOWLIST.has(r)) continue;
+    const required = SCORE_ALLOWLIST.get(r);
+    if (required) {
+      const body = read(p);
+      for (const marker of required) {
+        if (!marker.test(body)) missingMarkers.push(`${r} 缺少免责声明 ${marker}`);
+      }
+      continue;
+    }
     read(p).split('\n').forEach((line, i) => {
-      if (!scorePat.test(line)) return;
+      if (!numberPat.test(line)) return;
+      const why = [datasetPat.test(line) ? '数据集' : '', metricPat.test(line) ? '指标' : '']
+        .filter(Boolean).join('+');
+      if (!why) return;
       const tag = isHistorical(r) ? '[历史文档-允许]' : '[需人工确认]';
-      hits.push({ tag, s: `${tag} ${r}:${i + 1}  ${line.trim().slice(0, 90)}` });
+      hits.push({ tag, s: `${tag} ${r}:${i + 1} [${why}] ${line.trim().slice(0, 90)}` });
     });
   }
   const needReview = hits.filter((h) => h.tag.includes('需人工确认'));
-  add('分数', '评测分数残留（README 声明不主张分数）', needReview.length === 0,
-    `命中 ${hits.length} 处，需人工确认 ${needReview.length} 处（历史文档 ${hits.length - needReview.length} 处；白名单 ${SCORE_ALLOWLIST.size} 份）`
+  add('分数', '评测分数残留（README 声明不主张分数）',
+    needReview.length === 0 && missingMarkers.length === 0,
+    `命中 ${hits.length} 处，需人工确认 ${needReview.length} 处`
+    + `（历史文档 ${hits.length - needReview.length} 处；白名单 ${SCORE_ALLOWLIST.size} 份）`
+    + (missingMarkers.length
+      ? `\n     白名单文件缺失免责声明 ${missingMarkers.length} 处：\n     `
+        + missingMarkers.join('\n     ')
+      : '')
     + (needReview.length ? '\n     ' + needReview.slice(0, 15).map((h) => h.s).join('\n     ') : ''));
 }
 

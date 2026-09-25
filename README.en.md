@@ -144,10 +144,13 @@ scores** — that is part of what "trust layer" means here.
 
 ## Roadmap
 
-- [ ] `BENCHMARKS.md`: full conditions and one-command reproduction for the public benchmarks
-- [ ] `CHANGELOG.md` / `CONTRIBUTING.md` / `SECURITY.md`
-- [ ] Write `valid_to` on `supersede`, plus as-of query regression tests
+- [x] `BENCHMARKS.md`: full conditions and one-command reproduction (`npm run bench:cn` / `bench:cmrc` / `bench:hotpotqa`)
+- [x] Community files: `CHANGELOG.md` / `CONTRIBUTING.md` / `SECURITY.md` / `CODE_OF_CONDUCT.md`, plus `.env.example` and `examples/` (curl / Node / Java)
+- [x] One-command docs ↔ code consistency gate (`npm run check:docs`)
+- [x] Write `valid_to` on `supersede`, plus as-of query regression tests
+- [x] Clear the 3 pre-existing failing tests: the migration-backup/write-lock case is fixed (now re-checks the database file family after taking the lock); the 2 `test:lifecycle` doctor cases turned out to be a Node version below `engines >= 24`, **not a code defect**
 - [x] English documentation entry point (`README.en.md`)
+- [ ] Node version guard in `pretest`: `engines` is only a warning in npm and does not block execution, so Node < 24 shows 2 spurious red tests in `npm test`
 - [ ] English versions of the core guides
 - [ ] Deeper document parsing: pair with upstream RAGFlow / Docling, and keep Memory Bridge focused on the trust layer above them
 

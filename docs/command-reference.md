@@ -26,6 +26,10 @@
 | `npm test` | 构建服务端并运行全自动化 | Node test runner |
 | `npm run benchmark:rerank` | 真实模型重排 benchmark | Ollama |
 | `npm run benchmark:scale -- --receipt PATH` | 规模 benchmark | 使用隔离数据并原子保存 JSON 回执 |
+| `npm run bench:prepare` | 构建公开基准语料（CMRC 2018 / HotpotQA） | 需 Python `duckdb`；数据落到 `benchmarks/.work/`（不入库）；见 `BENCHMARKS.md` |
+| `npm run bench:cn` | 自建中文语料端到端评测（10 篇 + 12 题，含 2 道不可答题） | 隔离实例 + Ollama；测召回 / 作答 / 弃答三项 |
+| `npm run bench:cmrc` | CMRC 2018 中文抽取式评测（100 题 / 1000 篇） | 先 `bench:prepare`；CMRC 官方 EM/F1 口径（字符级） |
+| `npm run bench:hotpotqa` | HotpotQA 英文知识库评测（100 题，每题独立实例） | 先 `bench:prepare`；官方 EM/F1 口径（词级） |
 | `npm run evaluate:dense` | Dense 固定评测 | Ollama embedding |
 | `npm run evaluate:retrieval-p1` | P1 检索固定集 | 构建后运行 |
 | `npm run verify:dense-switch-rollback` | Dense alias 切换/回滚 | 构建后运行 |

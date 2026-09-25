@@ -25,6 +25,13 @@
 - `CONTRIBUTING.md`、`SECURITY.md`、`CODE_OF_CONDUCT.md`：贡献、安全与行为准则。
 - `examples/`：curl / Java / Node 三种接入示例，覆盖写入（含 `corpusDomain` /
   `classification`）、召回与 as-of 查询。
+- `BENCHMARKS.md` 与 `benchmarks/`：三套公开可复现的问答基准（CMRC 2018 中文抽取式、
+  HotpotQA 英文多跳、自建中文弃答语料），含公共脚手架、官方评分口径与语料生成脚本。
+  一键入口 `npm run bench:cn` / `bench:cmrc` / `bench:hotpotqa`，
+  语料准备 `npm run bench:prepare`。
+- `benchmarks/prepare/prepare-cmrc.py` / `prepare-hotpotqa.py`：从公开数据集现取并生成语料，
+  输出 manifest（数据集名、许可、种子、规模、各文件 sha256）。第三方语料**不随仓库分发**：
+  其许可（CC BY-SA 4.0）与本仓库不同，只保留生成规则。
 
 ### 变更
 
@@ -33,6 +40,12 @@
   `npm test` 的 `pretest` 钩子会在跑测试前自动重建，全新 clone 无需手工处理。
 - 对外文档不再主张任何评测分数。在复现脚本与完整条件随 `BENCHMARKS.md` 发布之前，
   README 与手册只描述能力现状；历史验收报告中的数字保持原值，仅作为当时环境的证据快照。
+- `npm run check:docs` 的「评测分数残留」判定由「提到数据集名」改为「**分数主张**」：
+  同一行同时出现分数形状的数字与（数据集名 或 指标名）才报。命令表里的 `bench:cmrc`
+  这类纯命名不再误报——假阳性会让门禁被无视，比不报更糟。同时它开始覆盖此前漏掉的形态
+  （带指标名但不带数据集名的表格行）。
+- `check:docs` 的白名单不再是免检：列入白名单的文档必须真的带有免责声明，
+  否则照旧判失败。这样「把声明删掉」无法静默放行整份文件的数字。
 
 ### 修复
 
@@ -47,6 +60,25 @@
   发现漂移即 fail-closed 拒绝迁移，避免用过期快照回滚。
   判据必须包含 `-wal`：**WAL 模式下并发写不落主库文件**（实测主库 size / mtime / inode 三项
   全不变，只把 WAL 撑大），只查主库会漏判；`-shm` 因只读访问也会被改写而不纳入判据。
+- `supersede` 现在显式写入被取代记忆的 `valid_to`（封口在继任者 `valid_from` 那一刻；
+  继任者未声明 `valid_from` 时退回取代时刻）。此前历史窗口只能靠 `hybrid-retrieval` 里
+  `status = 'superseded' AND updated_at > ?` 这一条回退判据，而 `updated_at` 是通用列、
+  其它写路径也会刷新它，历史窗口会随之漂移。两处取代路径（`remember` 的 `supersedesId`
+  与恢复流程的冲突取代）行为现已一致；`memories` 与 `memory_versions` **两张表同时封口**，
+  只改一边会让完整备份的逐字段一致性校验失败、导出的备份再也导不回来。
+  无法构成合法窗口时（被取代记忆的 `valid_from` 已不早于继任者生效时刻）保持 NULL，
+  不回退判据、不钳制出自相矛盾的历史。
+- 基准脚手架的四处测量缺陷（都会让跑出来的数字**不成立**，而不只是难看）：
+  ① 作答超时未捕获，一次 LLM 超时会崩掉整轮评测 → 改为记为 error 行，续跑自动重试；
+  ② 出错题被静默排除、不留计数 → 汇总新增 `errors` / `error_ids`，跑不满一眼可见；
+  ③ 条件标注与实际不符（`bench:cn` 写死 `filler=3`，而实际值由弃答档案决定）→ 改为标注档案名；
+  ④ HotpotQA 召回口径两头不一致（逐题按全部 gold、汇总按第一条 gold，两跳题会把召回算高一倍）
+  → 统一为「全部 gold 的平均」。
+- 评测实例现在**钉住模型**（作答请求也带 `keep_alive`）并把语义步预算放宽到 300s。
+  原因：实测 Ollama 冷加载 `bge-m3` 要 **85 秒**，而默认预算 120s 会在模型被卸载后
+  顶穿 → `provider_transport_error` → 语义链路**静默降级**（`quality=degraded`）
+  而指标照常计算。不修的话，跑出来的是「模型加载失败」而不是「检索能力」。
+  这是一条**评测条件**，已写进 `BENCHMARKS.md` 并需随数字一起报。
 
 ### 已知问题
 

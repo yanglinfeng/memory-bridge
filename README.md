@@ -110,7 +110,8 @@ npm run check:docs
 它会把「文档说的」与「代码里的」逐项比对并在不一致时以非零退出码失败，适合在发布前与每次
 大改后重跑。见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
-完整安装、运维、接口与排障文档从 [docs/README.md](docs/README.md) 进入。
+完整安装、运维、接口与排障文档从 [docs/README.md](docs/README.md) 进入；
+基准评测的条件与一键复现见 [BENCHMARKS.md](BENCHMARKS.md)。
 
 ## 评测
 
@@ -134,11 +135,15 @@ npm run check:docs
 
 ## Roadmap
 
-- [ ] `BENCHMARKS.md`：公开基准的完整条件与一键复现脚本
+- [x] `BENCHMARKS.md`：公开基准的完整条件与一键复现（`npm run bench:cn` / `bench:cmrc` / `bench:hotpotqa`）
 - [x] 社区四件套：`CONTRIBUTING.md` / `SECURITY.md` / `CHANGELOG.md` / `CODE_OF_CONDUCT.md`，附 `.env.example` 与 `examples/`（curl / Node / Java）
-- [ ] 清掉 3 例预存在的失败用例（迁移备份与写锁顺序 1 例、`test:lifecycle` doctor 2 例）
-- [ ] `supersede` 时补写 `valid_to`，并补 as-of 查询的回归测试
+- [x] 文档 ↔ 代码一致性门禁 `npm run check:docs`（发布前与每次大改后重跑）
+- [x] `supersede` 时补写 `valid_to`，并补 as-of 查询的回归测试
+- [x] 清掉 3 例预存在的失败用例：迁移备份与写锁顺序那 1 例已修（改为取锁后复检文件家族）；
+  `test:lifecycle` 的 2 例 doctor 经查是 Node 版本低于 `engines >= 24` 所致，**非代码缺陷**
 - [x] 英文入口 `README.en.md`（核心指南英文版仍待补）
+- [ ] `pretest` 加 Node 版本守卫：`engines` 在 npm 里只是警告、不阻断执行，
+  Node < 24 跑 `npm test` 会稳定看到 2 例假红灯
 - [ ] 文档解析深度：推荐接入 RAGFlow / Docling 等上游，忆桥专注其上的可信层
 
 ## License

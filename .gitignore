@@ -38,3 +38,12 @@ kb-auth-spec.json
 # 校验：npm run bundle:pinokio:check
 # 发布 Pinokio 启动器时，bundle/ 需随启动器目录一起打包提供。
 packaging/pinokio/memory-bridge/bundle/
+
+# 基准评测的下载数据与生成语料（不入库）
+# 生成：npm run bench:prepare（见 BENCHMARKS.md）
+# 第三方数据集许可是 CC BY-SA 4.0，与本仓库 Apache-2.0 不同，只保留生成规则不保留数据。
+benchmarks/.work/
+
+# Python（benchmarks/prepare 下的脚本用它读 parquet）
+__pycache__/
+*.pyc

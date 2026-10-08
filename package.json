@@ -1,7 +1,7 @@
 {
-  "name": "memory-bridge",
+  "name": "@yanglinfeng/memory-bridge",
+  "mcpName": "io.github.yanglinfeng/memory-bridge",
   "version": "1.0.0",
-  "private": true,
   "type": "module",
   "description": "Local-first, evidence-backed enterprise knowledge base and long-term memory MCP server with audit, versioning, and namespace isolation.",
   "license": "Apache-2.0",
@@ -11,6 +11,22 @@
   },
   "bugs": {
     "url": "https://github.com/yanglinfeng/memory-bridge/issues"
+  },
+  "bin": {
+    "memory-bridge": "./dist/server/mcp-stdio.js"
+  },
+  "files": [
+    "dist/",
+    "sidecar/",
+    "docs/",
+    "examples/",
+    "README.md",
+    "README.en.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
   },
   "engines": {
     "node": ">=24"
@@ -65,7 +81,8 @@
     "verify:release-scan": "node scripts/pre-release-scan.mjs",
     "verify:release-scan:history": "node scripts/pre-release-scan.mjs --history",
     "test": "npm run build:server && node --test --import tsx tests/**/*.test.ts tests/**/*.test.mjs",
-    "pretest": "npm run bundle:pinokio"
+    "pretest": "npm run bundle:pinokio",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.4",

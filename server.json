@@ -1,0 +1,32 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.yanglinfeng/memory-bridge",
+  "description": "Local-first knowledge and memory layer for MCP. Every answer carries source citations and a replayable traceId; bi-temporal document versioning keeps revoked docs out of default recall; user/namespace/scope isolation and a full audit log. Runs entirely on your machine with SQLite and local Ollama — no cloud, no API keys.",
+  "version": "1.0.0",
+  "repository": {
+    "url": "https://github.com/yanglinfeng/memory-bridge",
+    "source": "github"
+  },
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@yanglinfeng/memory-bridge",
+      "version": "1.0.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "MEMORY_BRIDGE_DATA_DIR",
+          "description": "Absolute path to the directory holding the SQLite database and derived indexes. Defaults to ./data under the current working directory.",
+          "isRequired": false
+        },
+        {
+          "name": "MEMORY_BRIDGE_OLLAMA_URL",
+          "description": "Base URL of the local Ollama runtime used for generation and embeddings. Defaults to http://127.0.0.1:11434.",
+          "isRequired": false
+        }
+      ]
+    }
+  ]
+}

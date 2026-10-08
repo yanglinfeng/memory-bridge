@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { isClientIdentityId } from './client-identity-contract.js';
 import { config, databasePath } from './config.js';

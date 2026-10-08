@@ -52,6 +52,7 @@
 | `npm run test:lifecycle` | 安装/升级/诊断生命周期单测 | 不调用模型 |
 | `npm run doctor` | 本地安装体检（Node、构建产物、SQLite、模型、端口、MCP） | 只读 |
 | `npm run pretest` | 重新生成 Pinokio bundle | 由 `npm test` 自动触发，保证全新 clone 可测 |
+| `npm run prepublishOnly` | 发布 npm 包前完整构建（server + web） | 由 `npm publish` 自动触发；本地 `npm pack` 前请先手动跑 `npm run build` |
 | `npm run kb:provision -- …` | 多租户授权签发（主体 + 令牌 + 授权矩阵） | 见第 12 节；变更类命令需 `--yes` |
 | `npm run kb:acceptance` | 多租户隔离验收（部门互不可见） | 使用隔离数据目录 |
 | `npm run repair:schema28-memory` | 修复 schema 28 时代的多用户长记忆缺陷数据 | 仅对旧库使用；先在副本上跑 |

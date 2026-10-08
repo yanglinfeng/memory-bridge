@@ -42,8 +42,19 @@
 - 记忆**列表、详情与导出**响应新增 `stableKey` 字段。该键存放于身份层 `memory_items`，
   此前响应里完全没有，下游做幂等与版本演进只能退化成按 `title` 匹配。未显式指定键时
   内核自动生成 `explicit:<uuid>`，因此该字段在真实数据里不为 `null`。
+- `server.json` 与 `glama.json`：面向 MCP 官方 Registry 与 Glama 目录的分发元数据
+  （server 名、npm 包标识、stdio 传输、可选环境变量；Glama 的维护者声明与分类）。
 
 ### 变更
+
+- npm 包名改为 scoped `@yanglinfeng/memory-bridge`（原名 `memory-bridge` 在 npm 上已被
+  一个无关项目占用），并补 `mcpName`、`bin`（`memory-bridge` → `dist/server/mcp-stdio.js`，
+  该入口补了 shebang）与 `files` 白名单。
+  **白名单是必需的**：此前 `npm pack` 一个 `dist/` 产物都不含（包装上根本跑不起来），
+  却把 `src/`、`tests/`、`scripts/`、`benchmarks/` 一起打了进去（约 360 个文件）；
+  现在只发 `dist/`、`docs/`、`examples/`、`sidecar/` 与根级说明文件（约 275 个）。
+- npm 包名改名不影响 MCP 工具名（`memory_remember` 等 7 个不带包名前缀）、环境变量名
+  或数据库文件名。
 
 - `packaging/pinokio/memory-bridge/bundle/` 不再纳入版本控制。它是**源码镜像式构建产物**
   （曾占仓库约三分之一文件量），改动源码后由 `npm run bundle:pinokio` 重新生成；

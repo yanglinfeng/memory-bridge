@@ -1,0 +1,31 @@
+{
+  "$schema": "https://glama.ai/mcp/schemas/server.json",
+  "maintainers": [
+    "yanglinfeng"
+  ],
+  "name": "memory-bridge",
+  "description": "Local-first knowledge and memory layer for MCP with evidence citations, bi-temporal document versioning, namespace isolation, and a full audit log. SQLite + local Ollama, no cloud.",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/yanglinfeng/memory-bridge",
+  "repository": "https://github.com/yanglinfeng/memory-bridge",
+  "categories": [
+    "knowledge-and-memory"
+  ],
+  "keywords": [
+    "mcp",
+    "memory",
+    "knowledge-base",
+    "rag",
+    "local-first",
+    "ollama",
+    "sqlite",
+    "audit",
+    "provenance",
+    "citation",
+    "versioning",
+    "typescript"
+  ],
+  "languages": [
+    "typescript"
+  ]
+}

@@ -145,12 +145,12 @@ function createFixture(root, version, marker) {
     fs.writeFileSync(path.join(source, excluded, 'must-not-copy.txt'), marker);
   }
   fs.writeFileSync(path.join(source, 'package.json'), JSON.stringify({
-    name: 'memory-bridge',
+    name: 'mcp-memory-bridge',
     version,
     engines: { node: '>=24' },
   }));
   fs.writeFileSync(path.join(source, 'package-lock.json'), JSON.stringify({
-    name: 'memory-bridge',
+    name: 'mcp-memory-bridge',
     version,
     lockfileVersion: 3,
   }));
@@ -1173,11 +1173,11 @@ test('update source fails closed without origin and supports explicit local sync
       path.join(launcher, 'update-source.js'),
     );
     fs.writeFileSync(path.join(bundle, 'package.json'), JSON.stringify({
-      name: 'memory-bridge',
+      name: 'mcp-memory-bridge',
       version: '1.0.0',
     }));
     fs.writeFileSync(path.join(bundle, 'package-lock.json'), JSON.stringify({
-      name: 'memory-bridge',
+      name: 'mcp-memory-bridge',
       version: '1.0.0',
       lockfileVersion: 3,
     }));
@@ -1186,15 +1186,15 @@ test('update source fails closed without origin and supports explicit local sync
     fs.writeFileSync(path.join(bundle, 'src', 'old.txt'), 'old');
     fs.writeFileSync(path.join(bundle, '.memory-bridge-source-bundle.json'), JSON.stringify({
       format: 'memory-bridge-source-bundle:v1',
-      package: 'memory-bridge',
+      package: 'mcp-memory-bridge',
       fingerprint: sourceBundleFingerprint(bundle),
     }));
     fs.writeFileSync(path.join(localSource, 'package.json'), JSON.stringify({
-      name: 'memory-bridge',
+      name: 'mcp-memory-bridge',
       version: '2.0.0',
     }));
     fs.writeFileSync(path.join(localSource, 'package-lock.json'), JSON.stringify({
-      name: 'memory-bridge',
+      name: 'mcp-memory-bridge',
       version: '2.0.0',
       lockfileVersion: 3,
     }));
@@ -1230,7 +1230,7 @@ test('update source fails closed without origin and supports explicit local sync
       path.join(localSource, '.memory-bridge-source-bundle.json'),
       JSON.stringify({
         format: 'memory-bridge-source-bundle:v1',
-        package: 'memory-bridge',
+        package: 'mcp-memory-bridge',
         fingerprint: sourceBundleFingerprint(localSource),
       }),
     );
@@ -1408,7 +1408,7 @@ test('restore rejects unsigned, tampered, wrong-key, and stale Stop receipts wit
     const unsignedReceipt = path.join(options.stateDir, 'receipts', 'unsigned.json');
     fs.writeFileSync(unsignedReceipt, `${JSON.stringify({
       format: 'memory-bridge-stop-postflight:v2',
-      package: 'memory-bridge',
+      package: 'mcp-memory-bridge',
       verifiedAt: new Date().toISOString(),
       installId: install.installId,
       pid: 999_999_999,

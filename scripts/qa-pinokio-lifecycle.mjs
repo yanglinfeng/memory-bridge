@@ -229,7 +229,7 @@ export function buildVNextBundle(sourceDirectory, destination, label) {
     path.join(target, BUNDLE_MARKER),
     `${JSON.stringify({
       format: 'memory-bridge-source-bundle:v1',
-      package: 'memory-bridge',
+      package: 'mcp-memory-bridge',
       fingerprint: after,
     }, null, 2)}\n`,
     { flag: 'wx', mode: 0o644 },

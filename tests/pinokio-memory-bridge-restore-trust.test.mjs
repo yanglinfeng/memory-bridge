@@ -35,9 +35,9 @@ function managedFixture(root) {
   fs.mkdirSync(installRoot, { recursive: true });
   fs.mkdirSync(dataDir, { recursive: true });
   fs.mkdirSync(receiptDir, { recursive: true });
-  writeJson(path.join(source, 'package.json'), { name: 'memory-bridge', version: '1.0.0' });
+  writeJson(path.join(source, 'package.json'), { name: 'mcp-memory-bridge', version: '1.0.0' });
   writeJson(path.join(source, 'package-lock.json'), {
-    name: 'memory-bridge',
+    name: 'mcp-memory-bridge',
     version: '1.0.0',
     lockfileVersion: 3,
   });
@@ -45,10 +45,10 @@ function managedFixture(root) {
   fs.writeFileSync(path.join(source, 'dist', 'server', 'mcp-stdio.js'), 'fixture');
   fs.writeFileSync(path.join(source, 'dist', 'web', 'index.html'), 'fixture');
   fs.writeFileSync(path.join(source, 'src', 'index.ts'), 'fixture');
-  writeJson(path.join(installRoot, 'package.json'), { name: 'memory-bridge' });
+  writeJson(path.join(installRoot, 'package.json'), { name: 'mcp-memory-bridge' });
   writeJson(path.join(installRoot, '.memory-bridge-managed.json'), {
     format: 'memory-bridge-managed-install:v1',
-    package: 'memory-bridge',
+    package: 'mcp-memory-bridge',
     installId,
   });
   writeJson(path.join(stateDir, 'install.json'), {

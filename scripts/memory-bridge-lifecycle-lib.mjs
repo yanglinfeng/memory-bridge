@@ -12,7 +12,11 @@ import path from 'node:path';
 import { backup, DatabaseSync } from 'node:sqlite';
 
 export const DATA_PURGE_CONFIRMATION = 'DELETE-MEMORY-BRIDGE-DATA';
-const EXPECTED_PACKAGE = 'memory-bridge';
+// package.json 的 name（npm 包名）：用于确认"操作对象确实是忆桥源码/安装"。
+const EXPECTED_PACKAGE = 'mcp-memory-bridge';
+// HTTP /api/health 的 service 字段：服务身份，是协议契约，**不随 npm 包名变化**
+// （src/server/http-server.ts 里硬编码为 memory-bridge，多处客户端据此识别服务）。
+const EXPECTED_SERVICE_IDENTITY = 'memory-bridge';
 export const EXPECTED_SCHEMA = 44;
 const INSTALL_MANIFEST = 'install.json';
 const LOCK_FILE = 'lifecycle.lock';
@@ -767,7 +771,7 @@ async function fetchStopHealth(readyUrl) {
   const body = await response.json();
   if (
     body?.ok !== true ||
-    body?.service !== EXPECTED_PACKAGE ||
+    body?.service !== EXPECTED_SERVICE_IDENTITY ||
     body?.mcpTransport !== 'stdio'
   ) {
     throw new Error('ready URL 的服务身份不是 Memory Bridge');
@@ -1610,7 +1614,7 @@ async function inspectService(host, port) {
     }
     const body = await response.json();
     const identified = body?.ok === true &&
-      body?.service === EXPECTED_PACKAGE &&
+      body?.service === EXPECTED_SERVICE_IDENTITY &&
       body?.mcpTransport === 'stdio';
     return check(
       'service.identity',

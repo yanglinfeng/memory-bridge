@@ -48,11 +48,11 @@ function createSource(directory, version, content) {
   fs.mkdirSync(path.join(directory, 'src'), { recursive: true });
   fs.mkdirSync(path.join(directory, 'scripts'), { recursive: true });
   fs.writeFileSync(path.join(directory, 'package.json'), JSON.stringify({
-    name: 'memory-bridge',
+    name: 'mcp-memory-bridge',
     version,
   }));
   fs.writeFileSync(path.join(directory, 'package-lock.json'), JSON.stringify({
-    name: 'memory-bridge',
+    name: 'mcp-memory-bridge',
     version,
     lockfileVersion: 3,
   }));
@@ -64,7 +64,7 @@ function createSource(directory, version, content) {
 function writeTrustedMarker(directory) {
   fs.writeFileSync(path.join(directory, markerName), `${JSON.stringify({
     format: 'memory-bridge-source-bundle:v1',
-    package: 'memory-bridge',
+    package: 'mcp-memory-bridge',
     fingerprint: fingerprint(directory),
   })}\n`);
 }
@@ -127,7 +127,7 @@ test('local update rejects unmarked, fake, and tampered candidates before bundle
     createSource(fake, '2.0.0', 'fake-version');
     fs.writeFileSync(path.join(fake, markerName), JSON.stringify({
       format: 'memory-bridge-source-bundle:v1',
-      package: 'memory-bridge',
+      package: 'mcp-memory-bridge',
       fingerprint: '0'.repeat(64),
     }));
     const tampered = path.join(root, 'tampered');

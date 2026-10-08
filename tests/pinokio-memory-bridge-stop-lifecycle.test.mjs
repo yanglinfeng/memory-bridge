@@ -24,11 +24,11 @@ function managedFixture(root) {
   fs.mkdirSync(source, { recursive: true });
   fs.mkdirSync(installRoot, { recursive: true });
   fs.mkdirSync(dataDir, { recursive: true });
-  writeJson(path.join(source, 'package.json'), { name: 'memory-bridge' });
-  writeJson(path.join(installRoot, 'package.json'), { name: 'memory-bridge' });
+  writeJson(path.join(source, 'package.json'), { name: 'mcp-memory-bridge' });
+  writeJson(path.join(installRoot, 'package.json'), { name: 'mcp-memory-bridge' });
   writeJson(path.join(installRoot, '.memory-bridge-managed.json'), {
     format: 'memory-bridge-managed-install:v1',
-    package: 'memory-bridge',
+    package: 'mcp-memory-bridge',
     installId,
   });
   writeJson(path.join(stateDir, 'install.json'), {
@@ -283,7 +283,7 @@ test('managed stop preflight and bounded postflight fail closed', async () => {
     assert.equal(fs.statSync(receiptFile).mode & 0o777, 0o600);
     const receipt = JSON.parse(fs.readFileSync(receiptFile, 'utf8'));
     assert.equal(receipt.format, 'memory-bridge-stop-postflight:v2');
-    assert.equal(receipt.package, 'memory-bridge');
+    assert.equal(receipt.package, 'mcp-memory-bridge');
     assert.equal(receipt.installId, fixture.installId);
     assert.equal(receipt.pid, child.pid);
     assert.equal(receipt.cwd, fs.realpathSync(fixture.installRoot));

@@ -23,11 +23,11 @@ function write(filePath, value) {
 function createSource(root, version = '1.0.0') {
   const source = path.join(root, 'source');
   write(path.join(source, 'package.json'), JSON.stringify({
-    name: 'memory-bridge',
+    name: 'mcp-memory-bridge',
     version,
   }));
   write(path.join(source, 'package-lock.json'), JSON.stringify({
-    name: 'memory-bridge',
+    name: 'mcp-memory-bridge',
     version,
     lockfileVersion: 3,
   }));
@@ -123,7 +123,7 @@ test('root source builds and atomically refreshes a canonical private-safe bundl
     ));
     assert.deepEqual(marker, {
       format: 'memory-bridge-source-bundle:v1',
-      package: 'memory-bridge',
+      package: 'mcp-memory-bridge',
       fingerprint: created.fingerprint,
     });
     assert.equal(marker.fingerprint, independentCanonicalFingerprint(destination));

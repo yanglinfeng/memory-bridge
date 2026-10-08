@@ -4,7 +4,9 @@ const os = require("os")
 const path = require("path")
 const { spawnSync } = require("child_process")
 
-const EXPECTED_PACKAGE = "memory-bridge"
+// package.json 的 name（npm 包名）。HTTP /api/health 的 service 身份字段是协议契约，
+// 不随包名变化，故此处只校验包名。
+const EXPECTED_PACKAGE = "mcp-memory-bridge"
 const BUNDLE_MARKER = ".memory-bridge-source-bundle.json"
 const REQUIRED_BUNDLE_FILES = [
   "package.json",

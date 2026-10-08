@@ -66,7 +66,15 @@
   却把 `src/`、`tests/`、`scripts/`、`benchmarks/` 一起打了进去（约 360 个文件）；
   现在只发 `dist/`、`docs/`、`examples/`、`sidecar/` 与根级说明文件（约 275 个）。
 - npm 包名改名不影响 MCP 工具名（`memory_remember` 等 7 个不带包名前缀）、环境变量名
-  或数据库文件名。
+  或数据库文件名，但**会**影响两处打包侧的所有权校验，已一并修正：`EXPECTED_PACKAGE`
+  常量此前同时承担「package.json 的 name」与「HTTP `/api/health` 的 service 身份」两个
+  语义，改名后 `npm run bundle:pinokio`（`npm test` 的 `pretest` 钩子）与生命周期用例会
+  直接失败。现拆成 `EXPECTED_PACKAGE`（校验包名，随包名变化）与
+  `EXPECTED_SERVICE_IDENTITY`（校验服务身份，固定 `memory-bridge`），后者对应
+  `src/server/http-server.ts` 里硬编码的 service 字段，是协议契约，不随包名走。
+- **升级提示**：改包名后需先删除 `packaging/pinokio/memory-bridge/bundle/`（构建产物，
+  已被 `.gitignore`）再重建。该目录的 canonical marker 记录了包名，旧 marker 会让重建
+  被所有权校验拒绝（这是防误删保护，不是缺陷）。全新 clone 不受影响。
 
 - `packaging/pinokio/memory-bridge/bundle/` 不再纳入版本控制。它是**源码镜像式构建产物**
   （曾占仓库约三分之一文件量），改动源码后由 `npm run bundle:pinokio` 重新生成；

@@ -4,7 +4,9 @@ import os from 'node:os';
 import path from 'node:path';
 
 export const BUNDLE_MARKER = '.memory-bridge-source-bundle.json';
-const EXPECTED_PACKAGE = 'memory-bridge';
+// package.json 的 name（npm 包名）。它与 HTTP /api/health 返回的 service 身份字段是两件
+// 事：包名需要在 npm 上唯一，可能变化；服务身份是协议契约，不随包名走。
+const EXPECTED_PACKAGE = 'mcp-memory-bridge';
 const REQUIRED_BUNDLE_FILES = [
   'package.json',
   'package-lock.json',

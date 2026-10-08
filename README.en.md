@@ -154,13 +154,23 @@ scores** — that is part of what "trust layer" means here.
 - [ ] English versions of the core guides
 - [ ] Deeper document parsing: pair with upstream RAGFlow / Docling, and keep Memory Bridge focused on the trust layer above them
 
+> **Where the open-source boundary lies.** Memory Bridge is positioned as a *trust layer*, and trust
+> has to be verifiable — so everything that constitutes that layer (source bindings, version chains,
+> audit log, namespace isolation) **lives in this repository, under Apache-2.0, and will not be
+> relicensed**. Only two things sit outside it: enterprise-intranet **document ingestion and
+> permission enforcement** (parsing, section-level chunking, ACL trimming, review workflow, image
+> pipeline), and **delivery & operations engineering** (offline bundles, upgrade/rollback, compliance
+> audit export, SLA-backed support). They are offered as separate commercial modules and do not
+> affect the completeness of this repository — a standalone deployment of this repo is a complete,
+> usable core.
+
 ## Contact & support
 
 | What | Where |
 |---|---|
 | Bug report | [Issues · bug report form](https://github.com/yanglinfeng/memory-bridge/issues/new?template=bug_report.yml) |
 | Feature request | [Issues · feature request form](https://github.com/yanglinfeng/memory-bridge/issues/new?template=feature_request.yml) |
-| On-premise delivery / commercial license / custom work | [Issues · commercial inquiry form](https://github.com/yanglinfeng/memory-bridge/issues/new?template=commercial_inquiry.yml) or the Commercial category in [Discussions](https://github.com/yanglinfeng/memory-bridge/discussions) |
+| On-premise delivery / commercial support & SLA / custom work | [Issues · commercial inquiry form](https://github.com/yanglinfeng/memory-bridge/issues/new?template=commercial_inquiry.yml) or the Commercial category in [Discussions](https://github.com/yanglinfeng/memory-bridge/discussions) |
 | Usage questions, deployment help, tuning notes | [Discussions](https://github.com/yanglinfeng/memory-bridge/discussions) |
 | Security vulnerability | [Security Advisories](https://github.com/yanglinfeng/memory-bridge/security/advisories/new) — **do not open a public issue for security problems**; see [SECURITY.md](./SECURITY.md) |
 
@@ -168,9 +178,22 @@ The maintainer is an individual developer ([@yanglinfeng](https://github.com/yan
 promise an SLA. Issues are triaged by whether they affect *verifiable citations*, *version
 traceability*, or *permission isolation*; commercial inquiries are answered first.
 
-Licensed under **Apache-2.0**: internal company use, modification, and integration into internal
-systems require **no additional permission**. You only need to get in touch for commercial support
-or an SLA, or to ship Memory Bridge inside a product you sell under a commercial license.
+Licensed under **Apache-2.0**. Internal company use, modification, integration into internal
+systems, and even **shipping Memory Bridge inside a product you sell are all permitted today** —
+that right comes with the license and we will not claw it back.
+
+So when do you actually need to contact us? When you need **accountability**, not permission:
+
+| What you need | Where to go |
+|---|---|
+| On-premise rollout, model selection and tuning, data migration | commercial inquiry form |
+| An SLA with committed response times, annual maintenance and upgrade guarantees | commercial inquiry form |
+| Enterprise intranet document ingestion, section-level chunking, and permission enforcement | commercial inquiry form |
+| Just using it | No need — `git clone` is enough |
+
+The "忆桥 / Memory Bridge" name and logo are **not** covered by the Apache-2.0 grant
+(see section 6 of the license). If you redistribute, ship under your own product name so users
+are not misled into thinking it is the official build.
 
 ## License
 

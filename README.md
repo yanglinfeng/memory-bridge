@@ -146,21 +146,37 @@ npm run check:docs
   Node < 24 跑 `npm test` 会稳定看到 2 例假红灯
 - [ ] 文档解析深度：推荐接入 RAGFlow / Docling 等上游，忆桥专注其上的可信层
 
+> **关于开源边界的说明。** 忆桥的定位是「可信层」，而可信必须可被验证——所以证据绑定、版本链、
+> 审计日志、命名空间隔离这些构成可信层的能力，**全部在本仓库、全部 Apache-2.0、且不会改为闭源**。
+> 只有两类东西不在本仓库内：企业内网的**文档摄取与权限落地**（解析、章节切分、ACL 裁剪、审核流、
+> 图像链路），以及**交付与运维工程**（离线交付包、升级回滚、合规审计导出、带 SLA 的支持）。
+> 它们作为独立模块提供商业支持，不影响本仓库的完整可用性——独立部署本仓库就是完整可用的内核。
+
 ## 联系与支持
 
 | 事项 | 走哪个通道 |
 |---|---|
 | 缺陷报告 | [Issues · 缺陷报告模板](https://github.com/yanglinfeng/memory-bridge/issues/new?template=bug_report.yml) |
 | 功能建议 | [Issues · 功能建议模板](https://github.com/yanglinfeng/memory-bridge/issues/new?template=feature_request.yml) |
-| 私有化部署 / 商用授权 / 定制开发 | [Issues · 商业合作模板](https://github.com/yanglinfeng/memory-bridge/issues/new?template=commercial_inquiry.yml) 或 [Discussions](https://github.com/yanglinfeng/memory-bridge/discussions) 的 Commercial 分类 |
+| 私有化部署实施 / 商业支持与 SLA / 定制开发 | [Issues · 商业合作模板](https://github.com/yanglinfeng/memory-bridge/issues/new?template=commercial_inquiry.yml) 或 [Discussions](https://github.com/yanglinfeng/memory-bridge/discussions) 的 Commercial 分类 |
 | 用法讨论、部署求助、调优经验 | [Discussions](https://github.com/yanglinfeng/memory-bridge/discussions) |
 | 安全漏洞 | [Security Advisories](https://github.com/yanglinfeng/memory-bridge/security/advisories/new) —— **请勿为安全问题开公开 Issue**，处理流程见 [SECURITY.md](./SECURITY.md) |
 
 维护者是个人开发者（[@yanglinfeng](https://github.com/yanglinfeng)），不开空头 SLA；缺陷会按「是否影响
 出处可验证 / 版本可追溯 / 权限可隔离」排序，商务类咨询优先回复。
 
-本项目以 **Apache-2.0** 授权：公司内部自用、二次开发、集成进内部系统**都不需要额外申请**。
-只有需要商业支持、SLA 承诺，或要把忆桥以商用许可方式打包进你们对外销售的产品时，才需要联系。
+本项目以 **Apache-2.0** 授权。公司内部自用、二次开发、集成进内部系统，乃至**打包进你们对外销售的产品**，都不需要向我们申请授权——这是 Apache-2.0 已经给到你的权利，我们不会事后收回。
+
+既然如此，什么情况下才需要联系？答案是需要**责任**，而不是许可：
+
+| 你需要的是 | 怎么走 |
+|---|---|
+| 私有化部署实施、模型选型与调优、历史数据迁移 | 商业合作表单 |
+| 带明确响应时间的 SLA、年度维护与升级保障 | 商业合作表单 |
+| 企业内网场景的文档摄取、章节切分与权限落地 | 商业合作表单 |
+| 只是想用起来 | 不必联系，`git clone` 即可 |
+
+「忆桥 / Memory Bridge」名称与标识不在 Apache-2.0 的授权范围内（见许可证第 6 条）。二次分发请使用你自己的产品名，不要让人误以为出自本项目官方。
 
 ## License
 

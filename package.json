@@ -62,6 +62,8 @@
     "bench:hotpotqa": "npm run build:server && node benchmarks/run-hotpotqa.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.server.json --noEmit",
     "check:docs": "node scripts/check-docs-consistency.mjs",
+    "verify:release-scan": "node scripts/pre-release-scan.mjs",
+    "verify:release-scan:history": "node scripts/pre-release-scan.mjs --history",
     "test": "npm run build:server && node --test --import tsx tests/**/*.test.ts tests/**/*.test.mjs",
     "pretest": "npm run bundle:pinokio"
   },

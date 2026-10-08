@@ -12,8 +12,37 @@
 | MCP 源码模式 | 开发 MCP | `npm run mcp` |
 | MCP 构建模式 | AIRI/其他客户端稳定使用 | `npm run mcp:built` |
 | 隔离验收环境 | 真实 AIRI 测试，不污染正式库 | `npm run prepare:airi-acceptance` |
+| 容器 · stdio MCP | 客户端以容器接入，宿主机无需 Node | `docker run -i --rm -v mb-data:/data mcp-memory-bridge` |
+| 容器 · HTTP 与管理台 | 容器内跑服务端（仅 Linux 或已启用 host networking 的桌面版） | `docker run --network host -v mb-data:/data mcp-memory-bridge dist/server/index.js` |
 
 不支持把 HTTP 直接监听到局域网或公网；host 只接受 `127.0.0.1`/`::1`。
+
+### 容器部署的三条硬约束
+
+镜像由仓库根目录的 `Dockerfile` 构建：
+
+```bash
+docker build -t mcp-memory-bridge .
+```
+
+它是两阶段构建：构建阶段装齐依赖并执行 `npm run build`，运行阶段只保留
+`--omit=dev` 依赖与 `dist/`，默认入口是 stdio MCP。运行时依赖仅
+`@modelcontextprotocol/sdk` 与 `zod`，与 `dependencies` 一致。
+
+三条约束都必须遵守：
+
+1. **HTTP 模式不能用 `-p` 端口映射。** 服务只监听回环地址（见上），`-p 3789:3789`
+   映射的是容器自己的回环，宿主机连不上。请改用 `--network host`（Docker Desktop
+   需先在设置里启用 host networking）。
+2. **Ollama 不在镜像内。** 需指向宿主机运行时：Docker Desktop 用默认的
+   `host.docker.internal`；Linux 加 `--add-host=host.docker.internal:host-gateway`，
+   或改用 `--network host` 后直接用 `127.0.0.1:11434`。
+3. **数据必须挂卷。** SQLite 库、日志与派生索引都在 `MEMORY_BRIDGE_DATA_DIR`
+   （镜像内默认 `/data`），不挂卷则容器删除即丢。
+
+镜像内置 `MEMORY_BRIDGE_USER_ID=default`，否则 MCP 启动会因缺少主体而拒绝运行；
+接入多租户时用 `-e MEMORY_BRIDGE_USER_ID=…` 或 `-e MEMORY_BRIDGE_MCP_TOKEN=…` 覆盖，
+建议后者配合账户凭据。
 
 ## 2. 目录规划
 

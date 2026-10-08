@@ -11,9 +11,9 @@
 ![Schema](https://img.shields.io/badge/schema-v44-blue)
 ![MCP](https://img.shields.io/badge/protocol-MCP-purple)
 
-> **EN** — Memory Bridge answers three questions most RAG / memory stacks skip: *where did this sentence come from*, *is the source still valid*, and *who can see it*. Every answer carries source bindings and a retrieval `traceId`; every change is audited; every namespace is isolated. Data never leaves your machine.
+> **EN** — Memory Bridge answers three questions most RAG / memory stacks skip: *where did this sentence come from*, *is the source still valid*, and *who can see it*. Every answer carries source bindings and a retrieval `traceId`; every change is audited; every namespace is isolated. By default, model requests go to local Ollama. If you configure a remote model endpoint, the relevant prompts and context are sent there.
 
-AI 知识库最大的风险不是答不出，是**编造**和**引用已废止的文件**。忆桥给回答配出处、给变更留审计、给部门数据上隔离——数据 100% 留在本机。
+AI 知识库最大的风险不是答不出，是**编造**和**引用已废止的文件**。忆桥给回答配出处、给变更留审计、给部门数据上隔离。默认配置使用本机 Ollama；如果将模型地址配置为远程服务，相关提示词和上下文会发送到该服务。
 
 ## 为什么是忆桥
 
@@ -56,12 +56,29 @@ AI 知识库最大的风险不是答不出，是**编造**和**引用已废止�
 
 ## Quick Start
 
-前置：Node.js ≥ 24，Ollama 已运行。
+前置：Node.js ≥ 24，Ollama 已运行（Docker 方式不需要本机 Node）。
 
 ```bash
 ollama pull qwen2.5:14b
 ollama pull bge-m3:latest
+```
 
+**方式 A —— npx（只接 MCP 客户端）**
+
+```bash
+MEMORY_BRIDGE_USER_ID=default npx -y mcp-memory-bridge
+```
+
+**方式 B —— Docker**
+
+```bash
+docker build -t mcp-memory-bridge .
+docker run -i --rm -v mb-data:/data mcp-memory-bridge
+```
+
+**方式 C —— 从源码运行（管理台 / 开发）**
+
+```bash
 git clone https://github.com/yanglinfeng/memory-bridge.git
 cd memory-bridge
 npm install
@@ -71,18 +88,30 @@ npm start          # HTTP 服务 + 管理台：http://127.0.0.1:3789
 
 首次启动为空记忆库——没有演示数据，管理台只展示真实写入的内容。
 
+> **容器里跑 HTTP 模式要注意**：忆桥只监听回环地址（`127.0.0.1` / `::1`），这是有意的安全
+> 契约——服务信任 loopback 上的无令牌请求。所以容器里**不能**用 `-p 3789:3789` 做端口映射
+> （映射到的是容器自己的回环，宿主机连不上），请改用 `--network host`（Docker Desktop 需先
+> 在设置里启用 host networking）。完整说明见 [Dockerfile](Dockerfile) 头部注释。
+
 接入任意 MCP 客户端（Claude Desktop / Cline / …）：
 
 ```json
 {
   "mcpServers": {
     "memory-bridge": {
-      "command": "node",
-      "args": ["/absolute/path/to/memory-bridge/dist/server/mcp-stdio.js"]
+      "command": "npx",
+      "args": ["-y", "mcp-memory-bridge"],
+      "env": {
+        "MEMORY_BRIDGE_USER_ID": "default"
+      }
     }
   }
 }
 ```
+
+`MEMORY_BRIDGE_USER_ID`（或改用 `MEMORY_BRIDGE_MCP_TOKEN`）是必填项——两者都缺时服务会拒绝
+启动。用 Docker 时把上面两项换成 `"command": "docker"` 与
+`"args": ["run", "-i", "--rm", "-v", "mb-data:/data", "mcp-memory-bridge"]`。
 
 ### 接入示例
 
@@ -117,7 +146,7 @@ npm run check:docs
 
 忆桥自带评测与压测链路（`scripts/` 下 40+ 个可执行脚本，覆盖检索、重排、巩固、命名空间隔离、上下文反思、规模、可靠性与崩溃恢复），并在 [`docs/acceptance-report-*.md`](docs/) 中保留带日期与环境的证据快照。
 
-**公开基准（英文知识库问答、中文自建集、大规模延迟压测）的完整条件与一键复现脚本将随 `BENCHMARKS.md` 发布。在数字可复现之前，README 不主张任何分数**——这是本项目「可信层」定位的一部分。
+**公开基准（英文知识库问答、中文自建集）的条件与一键复现脚本已列在 [`BENCHMARKS.md`](BENCHMARKS.md)。** 其中包含数据准备与运行限制；大规模延迟压测仍是项目内部评测，不作为公开基准。在数字可复现之前，README 不主张任何分数——这是本项目「可信层」定位的一部分。
 
 ## 和主流方案的区别（按维度，不按体量）
 
@@ -128,7 +157,7 @@ npm run check:docs
 | 全操作审计日志 | ✅ | 企业版 | ✅ | — | — |
 | 命名空间 / 部门隔离 | ✅ 可信会话 + 授权矩阵 | 企业版 | ✅ | 团队级 | Workspace |
 | 遗忘与纠正（tombstone / 版本追加） | ✅ | ✅ | ✅ | — | — |
-| 完全离线、数据不出本机 | ✅ | 部分 | ❌ 自托管社区版已下线 | ✅ | ✅ |
+| 可配置为全离线（模型端点也在本机） | ✅ | 部分 | — | ✅ | ✅ |
 | MCP 原生 | ✅ 7 工具 | ✅ | 社区封装 | ✅ | — |
 
 > 本表只列**架构上有无**，不评分数高低。各项目迭代都很快，请以各自仓库为准。

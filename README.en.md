@@ -12,7 +12,7 @@
 The biggest risk in an AI knowledge base is not "it can't answer" — it's **fabrication**
 and **citing a document that has already been superseded**. Memory Bridge attaches
 sources to every sentence, keeps an audit trail for every change, and isolates data
-per department. Nothing leaves your machine.
+per department. By default, model requests go to local Ollama. If you configure a remote model endpoint, the relevant prompts and context are sent to that service.
 
 ## Why Memory Bridge
 
@@ -55,12 +55,29 @@ per department. Nothing leaves your machine.
 
 ## Quick Start
 
-Prerequisites: Node.js ≥ 24 and a running Ollama.
+Prerequisites: Node.js ≥ 24 and a running Ollama (the Docker path needs no local Node).
 
 ```bash
 ollama pull qwen2.5:14b
 ollama pull bge-m3:latest
+```
 
+**Option A — npx (MCP client only)**
+
+```bash
+MEMORY_BRIDGE_USER_ID=default npx -y mcp-memory-bridge
+```
+
+**Option B — Docker**
+
+```bash
+docker build -t mcp-memory-bridge .
+docker run -i --rm -v mb-data:/data mcp-memory-bridge
+```
+
+**Option C — from source (console / development)**
+
+```bash
 git clone https://github.com/yanglinfeng/memory-bridge.git
 cd memory-bridge
 npm install
@@ -71,18 +88,32 @@ npm start          # HTTP server + console at http://127.0.0.1:3789
 The first launch starts with an empty memory store — no demo data. The console only
 shows what you actually wrote.
 
+> **Running HTTP mode inside a container**: Memory Bridge binds loopback only
+> (`127.0.0.1` / `::1`) — an intentional security contract, since the service trusts
+> token-less requests from loopback. So `-p 3789:3789` does **not** work (it maps to the
+> container's own loopback). Use `--network host` instead (Docker Desktop requires
+> enabling host networking first). See the header of [Dockerfile](Dockerfile).
+
 Wire it into any MCP client (Claude Desktop, Cline, …):
 
 ```json
 {
   "mcpServers": {
     "memory-bridge": {
-      "command": "node",
-      "args": ["/absolute/path/to/memory-bridge/dist/server/mcp-stdio.js"]
+      "command": "npx",
+      "args": ["-y", "mcp-memory-bridge"],
+      "env": {
+        "MEMORY_BRIDGE_USER_ID": "default"
+      }
     }
   }
 }
 ```
+
+`MEMORY_BRIDGE_USER_ID` (or `MEMORY_BRIDGE_MCP_TOKEN` instead) is required — the server
+refuses to start when both are absent. For Docker, replace the two fields with
+`"command": "docker"` and
+`"args": ["run", "-i", "--rm", "-v", "mb-data:/data", "mcp-memory-bridge"]`.
 
 ### Examples
 
@@ -122,10 +153,12 @@ under `scripts/`, covering retrieval, reranking, consolidation, namespace isolat
 context reflection, scale, reliability and crash recovery), plus date- and
 environment-stamped evidence snapshots in [`docs/acceptance-report-*.md`](docs/).
 
-**The full conditions and one-command reproduction scripts for the public benchmarks
-(English knowledge-base QA, a Chinese in-house set, and large-scale latency) will ship
-in `BENCHMARKS.md`. Until those numbers are reproducible, this README claims no
-scores** — that is part of what "trust layer" means here.
+**Conditions and one-command reproduction scripts for the public benchmarks
+(English knowledge-base QA and a Chinese in-house set) are available in
+[`BENCHMARKS.md`](BENCHMARKS.md).** It documents data preparation and runtime limits;
+large-scale latency testing remains an internal evaluation, not a public benchmark.
+Until numbers are reproducible, this README claims no scores — that is part of what
+"trust layer" means here.
 
 ## How it differs (by dimension, not by size)
 
@@ -136,7 +169,7 @@ scores** — that is part of what "trust layer" means here.
 | Full operation audit log | ✅ | Enterprise | ✅ | — | — |
 | Namespace / department isolation | ✅ trusted sessions + grants matrix | Enterprise | ✅ | Team-level | Workspace |
 | Forgetting & correction (tombstone / version append) | ✅ | ✅ | ✅ | — | — |
-| Fully offline, data never leaves the machine | ✅ | Partial | ❌ self-hosted community edition discontinued | ✅ | ✅ |
+| Can run fully offline when model endpoints are local | ✅ | Partial | — | ✅ | ✅ |
 | MCP native | ✅ 7 tools | ✅ | Community wrapper | ✅ | — |
 
 > This table only records whether a mechanism **exists architecturally**; it does not
@@ -144,7 +177,7 @@ scores** — that is part of what "trust layer" means here.
 
 ## Roadmap
 
-- [x] `BENCHMARKS.md`: full conditions and one-command reproduction (`npm run bench:cn` / `bench:cmrc` / `bench:hotpotqa`)
+- [x] `BENCHMARKS.md`: public benchmark conditions and reproduction (`npm run bench:cn` / `bench:cmrc` / `bench:hotpotqa`); large-scale latency remains internal
 - [x] Community files: `CHANGELOG.md` / `CONTRIBUTING.md` / `SECURITY.md` / `CODE_OF_CONDUCT.md`, plus `.env.example` and `examples/` (curl / Node / Java)
 - [x] One-command docs ↔ code consistency gate (`npm run check:docs`)
 - [x] Write `valid_to` on `supersede`, plus as-of query regression tests

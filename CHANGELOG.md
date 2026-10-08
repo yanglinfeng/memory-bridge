@@ -43,12 +43,24 @@
   此前响应里完全没有，下游做幂等与版本演进只能退化成按 `title` 匹配。未显式指定键时
   内核自动生成 `explicit:<uuid>`，因此该字段在真实数据里不为 `null`。
 - `server.json` 与 `glama.json`：面向 MCP 官方 Registry 与 Glama 目录的分发元数据
-  （server 名、npm 包标识、stdio 传输、可选环境变量；Glama 的维护者声明与分类）。
+  （server 名、npm 包标识、stdio 传输、环境变量；Glama 的维护者声明与分类）。
+  其中环境变量声明补齐了启动必需的 `MEMORY_BRIDGE_USER_ID`（`isRequired`）与
+  `MEMORY_BRIDGE_MCP_TOKEN`——MCP 进程在两者都缺时直接拒绝启动，此前的声明会导致
+  照它配置的客户端一启动就失败。
+- `Dockerfile` 与 `.dockerignore`：两阶段容器镜像。构建阶段 `npm ci` + `npm run build`，
+  运行阶段只保留 `--omit=dev` 依赖（编译产物实际只依赖 `@modelcontextprotocol/sdk` 与
+  `zod`）与 `dist/`。默认入口是 stdio MCP；HTTP 模式把 CMD 换成 `dist/server/index.js`。
+  镜像内置 `MEMORY_BRIDGE_USER_ID=default`（否则 MCP 启动即失败）与指向宿主机的
+  `MEMORY_BRIDGE_OLLAMA_URL`。**容器约束**：服务只监听回环地址，容器内 HTTP 模式不能用
+  `-p` 端口映射（映射到的是容器自己的回环），须改用 `--network host`；Ollama 不在镜像内；
+  数据目录必须挂卷。
 
 ### 变更
 
-- npm 包名改为 scoped `@yanglinfeng/memory-bridge`（原名 `memory-bridge` 在 npm 上已被
-  一个无关项目占用），并补 `mcpName`、`bin`（`memory-bridge` → `dist/server/mcp-stdio.js`，
+- npm 包名定为 `mcp-memory-bridge`（不带 scope）。原候选 `memory-bridge` 在 npm 上已被
+  一个无关项目占用；改用无 scope 名后无需注册 scope 账号，官方 Registry 的归属校验由
+  `mcpName`（`io.github.yanglinfeng/mcp-memory-bridge`）承担。同时补 `bin`
+  （`mcp-memory-bridge` 与 `memory-bridge` 两个命令名均指向 `dist/server/mcp-stdio.js`，
   该入口补了 shebang）与 `files` 白名单。
   **白名单是必需的**：此前 `npm pack` 一个 `dist/` 产物都不含（包装上根本跑不起来），
   却把 `src/`、`tests/`、`scripts/`、`benchmarks/` 一起打了进去（约 360 个文件）；

@@ -1,6 +1,6 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.yanglinfeng/memory-bridge",
+  "name": "io.github.yanglinfeng/mcp-memory-bridge",
   "description": "Local-first knowledge and memory layer for MCP. Every answer carries source citations and a replayable traceId; bi-temporal document versioning keeps revoked docs out of default recall; user/namespace/scope isolation and a full audit log. Runs entirely on your machine with SQLite and local Ollama — no cloud, no API keys.",
   "version": "1.0.0",
   "repository": {
@@ -10,7 +10,7 @@
   "packages": [
     {
       "registryType": "npm",
-      "identifier": "@yanglinfeng/memory-bridge",
+      "identifier": "mcp-memory-bridge",
       "version": "1.0.0",
       "transport": {
         "type": "stdio"
@@ -20,6 +20,17 @@
           "name": "MEMORY_BRIDGE_DATA_DIR",
           "description": "Absolute path to the directory holding the SQLite database and derived indexes. Defaults to ./data under the current working directory.",
           "isRequired": false
+        },
+        {
+          "name": "MEMORY_BRIDGE_USER_ID",
+          "description": "Trusted local principal the stdio session acts as. Required unless MEMORY_BRIDGE_MCP_TOKEN is supplied instead — the server refuses to start when both are absent.",
+          "isRequired": true
+        },
+        {
+          "name": "MEMORY_BRIDGE_MCP_TOKEN",
+          "description": "Account credential used to resolve the startup principal. Alternative to MEMORY_BRIDGE_USER_ID; consumed once at startup and then removed from the process environment.",
+          "isRequired": false,
+          "isSecret": true
         },
         {
           "name": "MEMORY_BRIDGE_OLLAMA_URL",

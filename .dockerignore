@@ -1,0 +1,39 @@
+# 构建上下文排除清单
+#
+# 关键：data/ 是本地活库（当前约 690MB），必须排除——否则每次 docker build
+# 都要把整个库推给守护进程。dist/ 同样排除，镜像里的产物一律由构建阶段生成，
+# 不复用宿主机的构建结果（避免把本机平台/环境的产物打进镜像）。
+
+node_modules/
+dist/
+data/
+logs/
+coverage/
+sandbox/
+.tmp/
+
+# 版本控制与 CI
+.git/
+.gitignore
+.github/
+
+# 不参与构建的源码与资产
+tests/
+benchmarks/
+packaging/
+scripts/
+
+# 机密与本地配置
+.env
+.env.*
+!.env.example
+*.sqlite3
+*.sqlite3-*
+*.key
+*.pem
+
+# 编辑器 / 系统噪音
+.DS_Store
+*.log
+.vscode/
+.idea/

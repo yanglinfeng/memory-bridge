@@ -25,6 +25,9 @@ stdio。首次启动为空数据，不包含演示记忆。
 | [CHANGELOG.md](../CHANGELOG.md) | 版本变更记录（含默认值变更与已知限制） |
 | [CODE_OF_CONDUCT.md](../CODE_OF_CONDUCT.md) | 贡献者行为准则 |
 | [BENCHMARKS.md](../BENCHMARKS.md) | 基准评测：四套评测的分工、前置、一键复现、口径、隔离保证与已知局限 |
+| [Dockerfile](../Dockerfile) | 容器镜像：两阶段构建、stdio/HTTP 两种入口、回环绑定与挂卷约束 |
+| [server.json](../server.json) | MCP 官方 Registry 元数据（名称、包标识、传输方式、环境变量） |
+| [glama.json](../glama.json) | Glama 目录元数据（维护者、分类、关键词） |
 | [.env.example](../.env.example) | 可复制的环境变量清单（含默认值与加载方式） |
 | [examples/](../examples/README.md) | 零构建接入示例：curl / Node / Java |
 

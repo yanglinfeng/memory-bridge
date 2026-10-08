@@ -1,6 +1,6 @@
 {
-  "name": "@yanglinfeng/memory-bridge",
-  "mcpName": "io.github.yanglinfeng/memory-bridge",
+  "name": "mcp-memory-bridge",
+  "mcpName": "io.github.yanglinfeng/mcp-memory-bridge",
   "version": "1.0.0",
   "type": "module",
   "description": "Local-first, evidence-backed enterprise knowledge base and long-term memory MCP server with audit, versioning, and namespace isolation.",
@@ -13,6 +13,7 @@
     "url": "https://github.com/yanglinfeng/memory-bridge/issues"
   },
   "bin": {
+    "mcp-memory-bridge": "./dist/server/mcp-stdio.js",
     "memory-bridge": "./dist/server/mcp-stdio.js"
   },
   "files": [
@@ -25,9 +26,6 @@
     "CHANGELOG.md",
     "LICENSE"
   ],
-  "publishConfig": {
-    "access": "public"
-  },
   "engines": {
     "node": ">=24"
   },

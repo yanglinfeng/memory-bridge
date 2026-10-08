@@ -5,6 +5,13 @@
   "type": "module",
   "description": "Local-first, evidence-backed enterprise knowledge base and long-term memory MCP server with audit, versioning, and namespace isolation.",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yanglinfeng/memory-bridge.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yanglinfeng/memory-bridge/issues"
+  },
   "engines": {
     "node": ">=24"
   },

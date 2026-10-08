@@ -15,7 +15,12 @@ import {
   Sparkles,
   UserRound,
 } from 'lucide-react';
-import { api } from './api';
+import { api, ApiError } from './api';
+import {
+  authenticationGateSignalFromProbeStatus,
+  reduceAuthenticationGate,
+  type AuthenticationGateSignal,
+} from './authentication-gate';
 import { AccessGate } from './components/AccessGate';
 import { AccountPage } from './components/AccountPage';
 import { AiriSetup } from './components/AiriSetup';
@@ -76,27 +81,56 @@ export default function App() {
     window.setTimeout(() => setToast(null), 3200);
   }, []);
 
-  const authenticationChanged = useCallback(() => {
-    authenticationEpoch.current += 1;
-    authenticationGate.current = false;
-    setAuthenticationRequired(false);
-    setAuthenticationRevision((value) => value + 1);
+  const applyGateSignal = useCallback((signal: AuthenticationGateSignal) => {
+    const next = reduceAuthenticationGate(authenticationGate.current, signal);
+    const changed = next !== authenticationGate.current;
+    authenticationGate.current = next;
+    setAuthenticationRequired(next);
+    // 只在"挂门/撤门"的边沿重挂载页面级组件：401 洪峰不会引发反复重挂载。
+    if (changed) {
+      authenticationEpoch.current += 1;
+      setAuthenticationRevision((value) => value + 1);
+    }
   }, []);
+
+  const authenticationChanged = useCallback(() => {
+    applyGateSignal({ type: 'identity-ok' });
+  }, [applyGateSignal]);
 
   const authenticationLost = useCallback(() => {
     api.clearAccessToken();
     setHealth(null);
-    if (authenticationGate.current) return;
-    authenticationEpoch.current += 1;
-    authenticationGate.current = true;
-    setAuthenticationRequired(true);
-    setAuthenticationRevision((value) => value + 1);
-  }, []);
+    applyGateSignal({ type: 'authentication-lost' });
+  }, [applyGateSignal]);
 
   useEffect(
     () => api.onAuthenticationRequired(authenticationLost),
     [authenticationLost],
   );
+
+  // 登录门的唯一判据是 /api/identity 是否 401。
+  // 曾经的实现让 health 探针（匿名 200）去撤登录门，于是形成
+  // "health 200 → 撤门 → 受保护组件无令牌请求 401 → 挂门 → health 200 → …"
+  // 的反复重挂载循环，用户刚输入的令牌也会被每次 401 清掉。
+  useEffect(() => {
+    let mounted = true;
+    const epoch = authenticationEpoch.current;
+    api
+      .identity()
+      .then(() => {
+        if (!mounted || epoch !== authenticationEpoch.current) return;
+        applyGateSignal({ type: 'identity-ok' });
+      })
+      .catch((error: unknown) => {
+        if (!mounted || epoch !== authenticationEpoch.current) return;
+        const status = error instanceof ApiError ? error.status : null;
+        const signal = authenticationGateSignalFromProbeStatus(status);
+        if (signal) applyGateSignal(signal);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [authenticationRevision, applyGateSignal]);
 
   useEffect(() => {
     let mounted = true;
@@ -104,12 +138,13 @@ export default function App() {
     const check = () =>
       api.health().then((value) => {
         if (!mounted || epoch !== authenticationEpoch.current) return;
+        // 连通性信号：只更新状态指示，不改登录门
         setHealth(value);
-        authenticationGate.current = false;
-        setAuthenticationRequired(false);
+        applyGateSignal({ type: 'health-ok' });
       }).catch(() => {
         if (!mounted || epoch !== authenticationEpoch.current) return;
         setHealth(null);
+        applyGateSignal({ type: 'health-unreachable' });
       });
     check();
     const timer = window.setInterval(check, 15_000);
@@ -117,7 +152,7 @@ export default function App() {
       mounted = false;
       window.clearInterval(timer);
     };
-  }, [authenticationRevision]);
+  }, [authenticationRevision, applyGateSignal]);
 
   return (
     <div className="app-shell">
@@ -127,13 +162,21 @@ export default function App() {
           <strong>忆桥 <span>Memory Bridge</span></strong>
         </div>
         <div
-          className={`connection-state ${health ? 'connected' : 'offline'}`}
+          className={`connection-state ${
+            authenticationRequired
+              ? 'offline'
+              : health
+                ? 'connected'
+                : 'offline'
+          }`}
         >
-          {health ? <CheckCircle2 size={16} /> : <CircleAlert size={16} />}
-          {health
-            ? '本地服务已连接'
-            : authenticationRequired
-              ? '需要账户令牌'
+          {authenticationRequired || !health
+            ? <CircleAlert size={16} />
+            : <CheckCircle2 size={16} />}
+          {authenticationRequired
+            ? '需要账户令牌'
+            : health
+              ? '本地服务已连接'
               : '本地服务未连接'}
         </div>
       </header>

@@ -102,8 +102,8 @@ Wire it into any MCP client (Claude Desktop, Cline, …):
 {
   "mcpServers": {
     "memory-bridge": {
-      "command": "npx",
-      "args": ["-y", "mcp-memory-bridge"],
+      "command": "node",
+      "args": ["/absolute/path/to/memory-bridge/dist/server/mcp-stdio.js"],
       "env": {
         "MEMORY_BRIDGE_USER_ID": "default"
       }
@@ -116,6 +116,8 @@ Wire it into any MCP client (Claude Desktop, Cline, …):
 refuses to start when both are absent. For Docker, replace the two fields with
 `"command": "docker"` and
 `"args": ["run", "-i", "--rm", "-v", "mb-data:/data", "mcp-memory-bridge"]`.
+Once the npm package ships, you can also use `"command": "npx"` with
+`"args": ["-y", "mcp-memory-bridge"]`.
 
 ### Examples
 

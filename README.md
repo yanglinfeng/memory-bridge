@@ -101,8 +101,8 @@ npm start          # HTTP 服务 + 管理台：http://127.0.0.1:3789
 {
   "mcpServers": {
     "memory-bridge": {
-      "command": "npx",
-      "args": ["-y", "mcp-memory-bridge"],
+      "command": "node",
+      "args": ["/absolute/path/to/memory-bridge/dist/server/mcp-stdio.js"],
       "env": {
         "MEMORY_BRIDGE_USER_ID": "default"
       }
@@ -114,6 +114,7 @@ npm start          # HTTP 服务 + 管理台：http://127.0.0.1:3789
 `MEMORY_BRIDGE_USER_ID`（或改用 `MEMORY_BRIDGE_MCP_TOKEN`）是必填项——两者都缺时服务会拒绝
 启动。用 Docker 时把上面两项换成 `"command": "docker"` 与
 `"args": ["run", "-i", "--rm", "-v", "mb-data:/data", "mcp-memory-bridge"]`。
+npm 包发布后，也可改用 `"command": "npx"` 与 `"args": ["-y", "mcp-memory-bridge"]`。
 
 ### 接入示例
 

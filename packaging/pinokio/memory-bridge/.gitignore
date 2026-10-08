@@ -2,3 +2,6 @@ app/
 state/
 .app.stage-*/
 .app.rollback/
+.bundle.stage-*/
+.bundle.rollback-*/
+.bundle.quarantine-*/

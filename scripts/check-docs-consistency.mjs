@@ -43,6 +43,17 @@ const SKIP_DIRS = new Set([
   '.firecrawl', 'coverage', 'playwright-report', 'test-results', 'logs', 'data',
 ]);
 
+/**
+ * 前缀式跳过的目录名。bundle 构建的事务目录形如 `.bundle.stage-<uuid>` /
+ * `.bundle.quarantine-<uuid>`（切换失败时 quarantine 会保留为证据），名字带随机
+ * UUID 无法逐条列举；它们都是构建产物，不应参与文档事实对撞。
+ */
+const SKIP_DIR_PREFIXES = ['.bundle.', '.app.'];
+
+function shouldSkipDir(name) {
+  return SKIP_DIRS.has(name) || SKIP_DIR_PREFIXES.some((prefix) => name.startsWith(prefix));
+}
+
 /** 历史文档：内部数字是写作时刻的快照，有意保留，不参与口径对撞。 */
 function isHistorical(rel) {
   const base = path.basename(rel);
@@ -72,7 +83,7 @@ function walk(dir = REPO, exts) {
     try { entries = fs.readdirSync(d, { withFileTypes: true }); } catch { return; }
     for (const e of entries) {
       if (e.isDirectory()) {
-        if (SKIP_DIRS.has(e.name)) continue;
+        if (shouldSkipDir(e.name)) continue;
         rec(path.join(d, e.name));
       } else if (!exts || exts.some((x) => e.name.endsWith(x))) {
         out.push(path.join(d, e.name));

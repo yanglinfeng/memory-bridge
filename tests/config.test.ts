@@ -284,6 +284,11 @@ test('历史重提炼证据多样性开关只接受显式 true', () => {
   assert.deepEqual(JSON.parse(child.stdout), [true, true]);
 });
 
+// -0 与 0 是同一个数值，但 `assert/strict` 用 Object.is 判等（Object.is(-0, 0) 为 false）。
+// 零偏移时区（如 UTC）下 `-new Date().getTimezoneOffset()` 得到 -0，而子进程里
+// `String(-0)` 输出 "0"、解析回来是 0 —— 归一化后再比较，避免把表示差异误判为回归。
+const normalizeZero = (value: number): number => (value === 0 ? 0 : value);
+
 test('层级摘要时区默认跟随本机且只接受合法分钟偏移', () => {
   const evaluate = (value: string | undefined) => {
     const environment = { ...process.env };
@@ -315,8 +320,8 @@ test('层级摘要时区默认跟随本机且只接受合法分钟偏移', () =>
   const defaultOffset = evaluate(undefined);
   assert.equal(defaultOffset.status, 0, defaultOffset.stderr);
   assert.equal(
-    Number(defaultOffset.stdout),
-    -new Date().getTimezoneOffset(),
+    normalizeZero(Number(defaultOffset.stdout)),
+    normalizeZero(-new Date().getTimezoneOffset()),
   );
 
   for (const [value, expected] of [
@@ -334,8 +339,8 @@ test('层级摘要时区默认跟随本机且只接受合法分钟偏移', () =>
     const result = evaluate(invalid);
     assert.equal(result.status, 0, result.stderr);
     assert.equal(
-      Number(result.stdout),
-      -new Date().getTimezoneOffset(),
+      normalizeZero(Number(result.stdout)),
+      normalizeZero(-new Date().getTimezoneOffset()),
     );
   }
 });

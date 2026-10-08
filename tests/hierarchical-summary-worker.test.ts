@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
+import { config } from '../src/server/config.js';
 import { openDatabase } from '../src/server/database.js';
 import { EpisodicMemoryService } from '../src/server/episodic-memory-service.js';
 import type {
@@ -182,6 +183,23 @@ test('层级摘要 provider 失败进入可重试 failed，不被误记为完成
   }
 });
 
+// 日 / 周桶键由 config.summaryTimezoneOffsetMinutes 决定（默认跟随本机时区）。
+// 因此「跨本地午夜边界」这类用例的场景时刻必须按同一偏移折算成 UTC —— 直接写死
+// UTC 字面量会让它在零偏移（CI 的 UTC）或负偏移的机器上落到别的本地日期，从而稳定失败。
+// 统一用「本地时刻」表达场景，任何时区下语义与期望值都不变。
+function localTimeToIso(
+  year: number,
+  month: number,
+  day: number,
+  hour: number,
+  minute: number,
+): string {
+  const utcMillis =
+    Date.UTC(year, month - 1, day, hour, minute) -
+    config.summaryTimezoneOffsetMinutes * 60_000;
+  return new Date(utcMillis).toISOString();
+}
+
 test('会话先结束、episode 后物化时补排 session/day/week 且重放幂等', async () => {
   resetModelQosForTests();
   const fixture = createFixture();
@@ -195,7 +213,7 @@ test('会话先结束、episode 后物化时补排 session/day/week 且重放幂
       userContent: '这是一段跨越本地午夜边界的长期对话。',
       assistantTurnExternalId: 'ended-before-episode-assistant',
       assistantContent: '我会按本地日期整理。',
-      occurredAt: '2026-08-12T16:30:00.000Z',
+      occurredAt: localTimeToIso(2026, 8, 13, 0, 30),
     });
     fixture.lifecycle.endSession(
       'alice',
@@ -212,7 +230,7 @@ test('会话先结束、episode 后物化时补排 session/day/week 且重放幂
 
     const episodic = new EpisodicMemoryService(
       fixture.database,
-      () => new Date('2026-08-13T00:00:00.000Z'),
+      () => new Date(localTimeToIso(2026, 8, 13, 8, 0)),
     );
     const episodeWorker = new MemoryWorker(
       fixture.lifecycle,
@@ -248,7 +266,7 @@ test('会话先结束、episode 后物化时补排 session/day/week 且重放幂
       ],
     );
     assert.ok(payloads.every((payload) =>
-      payload.timezoneOffsetMinutes === 480 &&
+      payload.timezoneOffsetMinutes === config.summaryTimezoneOffsetMinutes &&
       payload.trigger === 'episode_materialized' &&
       payload.scopeType === 'personal' &&
       payload.scopeKey === 'self',

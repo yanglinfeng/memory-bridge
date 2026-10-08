@@ -57,6 +57,8 @@ export const backupMemorySchema = z.object({
   status: memoryStatusSchema,
   source: z.string().min(1),
   sourceRef: z.string().nullable(),
+  /** 旧备份无此字段（v44 之前未导出），导入时落 null。 */
+  stableKey: z.string().nullable().optional(),
   occurredAt: nullableIsoDateSchema,
   validFrom: nullableIsoDateSchema,
   validTo: nullableIsoDateSchema,

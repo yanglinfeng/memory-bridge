@@ -1703,10 +1703,12 @@ export class MemoryStore {
   ): MemoryRecord | null {
     const row = this.database
       .prepare(
-        `SELECT * FROM memories
-         WHERE id = ? AND user_id = ?
-           ${namespace === undefined ? '' : 'AND namespace = ?'}
-           ${includeDeleted ? '' : "AND status != 'deleted'"}`,
+        `SELECT m.*, i.stable_key AS stable_key
+         FROM memories m
+         LEFT JOIN memory_items i ON i.id = m.id
+         WHERE m.id = ? AND m.user_id = ?
+           ${namespace === undefined ? '' : 'AND m.namespace = ?'}
+           ${includeDeleted ? '' : "AND m.status != 'deleted'"}`,
       )
       .get(
         id,
@@ -1717,20 +1719,20 @@ export class MemoryStore {
   }
 
   list(input: MemoryListInput = {}): MemoryListResult {
-    const where: string[] = ['user_id = ?'];
+    const where: string[] = ['m.user_id = ?'];
     const values: SQLInputValue[] = [
       cleanText(input.userId, config.defaultUserId),
     ];
 
     if (input.query) {
       where.push(
-        `(title LIKE ? OR content LIKE ? OR summary LIKE ? OR tags_json LIKE ?)`,
+        `(m.title LIKE ? OR m.content LIKE ? OR m.summary LIKE ? OR m.tags_json LIKE ?)`,
       );
       const query = `%${input.query.trim()}%`;
       values.push(query, query, query, query);
     }
     if (input.namespace) {
-      where.push('namespace = ?');
+      where.push('m.namespace = ?');
       values.push(input.namespace);
     }
     if (input.scopeKey !== undefined && input.scopeType === undefined) {
@@ -1744,41 +1746,43 @@ export class MemoryStore {
       ) {
         throw new Error('记忆作用域 scopeType 无效');
       }
-      where.push('scope_type = ?');
+      where.push('m.scope_type = ?');
       values.push(input.scopeType);
       if (input.scopeKey !== undefined) {
         const scopeKey = cleanText(input.scopeKey);
         if (!scopeKey) throw new Error('scopeKey 不能为空');
-        where.push('scope_key = ?');
+        where.push('m.scope_key = ?');
         values.push(scopeKey);
       }
     }
     if (input.kind) {
-      where.push('kind = ?');
+      where.push('m.kind = ?');
       values.push(input.kind);
     }
     if (input.status) {
-      where.push('status = ?');
+      where.push("m.status = ?");
       values.push(input.status);
     } else {
-      where.push("status != 'deleted'");
+      where.push("m.status != 'deleted'");
     }
     if (input.tag) {
-      where.push('tags_json LIKE ?');
+      where.push('m.tags_json LIKE ?');
       values.push(`%${JSON.stringify(input.tag).slice(1, -1)}%`);
     }
 
     const whereSql = where.join(' AND ');
     const totalRow = this.database
-      .prepare(`SELECT COUNT(*) AS total FROM memories WHERE ${whereSql}`)
+      .prepare(`SELECT COUNT(*) AS total FROM memories m WHERE ${whereSql}`)
       .get(...values) as DatabaseRow;
     const limit = Math.max(1, Math.min(input.limit || 50, 200));
     const offset = Math.max(0, input.offset || 0);
     const rows = this.database
       .prepare(
-        `SELECT * FROM memories
+        `SELECT m.*, i.stable_key AS stable_key
+         FROM memories m
+         LEFT JOIN memory_items i ON i.id = m.id
          WHERE ${whereSql}
-         ORDER BY updated_at DESC
+         ORDER BY m.updated_at DESC
          LIMIT ? OFFSET ?`,
       )
       .all(...values, limit, offset) as DatabaseRow[];
@@ -6733,9 +6737,11 @@ export class MemoryStore {
     try {
       const memoryRows = this.database
         .prepare(
-          `SELECT * FROM memories
-           WHERE user_id = ?
-           ORDER BY created_at ASC, id ASC`,
+          `SELECT m.*, i.stable_key AS stable_key
+           FROM memories m
+           LEFT JOIN memory_items i ON i.id = m.id
+           WHERE m.user_id = ?
+           ORDER BY m.created_at ASC, m.id ASC`,
         )
         .all(ownerId) as DatabaseRow[];
       const relationRows = this.database
@@ -7261,10 +7267,10 @@ export class MemoryStore {
           normalizeClassification(memory.classification),
         );
         this.journal.recordCreate(
-          memory,
+          { ...memory, stableKey: memory.stableKey ?? null },
           'backup-import',
           'imported',
-          `legacy:${memory.id}`,
+          memory.stableKey ?? `legacy:${memory.id}`,
         );
       }
       for (const relation of backup.relations) {

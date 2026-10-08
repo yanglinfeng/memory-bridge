@@ -90,6 +90,8 @@ export interface MemoryRecord {
   lastAccessedAt: string | null;
   accessCount: number;
   checksum: string;
+  /** 客户端幂等键（UNIQUE(user_id, namespace, stable_key)），无则 null。下游集成方据此做幂等与版本判定。 */
+  stableKey: string | null;
   deletedAt: string | null;
   origin?: MemoryOrigin;
   corpusDomain?: CorpusDomain;

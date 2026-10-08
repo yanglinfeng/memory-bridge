@@ -210,6 +210,7 @@ export class EpisodicMemoryService {
         lastAccessedAt: null,
         accessCount: 0,
         checksum: canonicalContentHash(content),
+        stableKey: null,
         deletedAt: null,
       };
       this.database.prepare(

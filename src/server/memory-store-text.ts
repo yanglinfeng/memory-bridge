@@ -60,6 +60,7 @@ export function rowToMemory(row: DatabaseRow): MemoryRecord {
     lastAccessedAt: asNullableString(row.last_accessed_at),
     accessCount: Number(row.access_count),
     checksum: asString(row.checksum),
+    stableKey: asNullableString(row.stable_key),
     deletedAt: asNullableString(row.deleted_at),
     origin: row.origin === 'api' ? 'api' : 'pipeline',
     corpusDomain: (['policy', 'open', 'chat'] as const).includes(

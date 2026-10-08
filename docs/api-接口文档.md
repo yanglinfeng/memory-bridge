@@ -208,7 +208,7 @@ POST /api/recall
 - 引用可验证——每次召回带 `traceId`，可回放「查询改写 → 候选 → 融合 → 重排 → 选择 → 注入」全程；
 - 弃答闸门——确定性规则（墓碑、规范值不匹配）永不放宽，语义闸门可按 `strict / balanced / eager` 档位调节；
 - 时序有效性——`valid_from` / `valid_to` 约束检索窗口，被替代的版本退出召回；
-- 完全离线——Embedding、重排、生成全部走本机 Ollama 或本地 sidecar。
+- 默认可在本机离线运行——Embedding、重排、生成默认使用本机 Ollama 或本地 sidecar；若配置远程模型端点，相关提示词和上下文会发送到该端点。
 
 已知短板：
 

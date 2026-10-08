@@ -16,6 +16,10 @@
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-08
+
+首个公开发布。发布动作：切仓库为 public、打 tag `v1.0.0`、在干净目录 clone 跑通 Quick Start。
+
 ### 新增
 
 - `scripts/check-docs-consistency.mjs` 与 `npm run check:docs`：把文档声明的事实与代码实际事实
@@ -147,13 +151,7 @@
     `runtime.node` 检查要求 Node ≥ 24，用 Node 22 运行必然判 fail 并连带拉低 `daily.passed`，
     被测的 warn / info 逻辑其实完全正常。换用满足要求的解释器即 **36/36 通过**，非代码缺陷。
 
----
-
-## [1.0.0] - 待发布
-
-首个公开发布。发布动作：切仓库为 public、打 tag `v1.0.0`、在干净目录 clone 跑通 Quick Start。
-
-### 新增
+### 核心能力
 
 **检索与问答**
 

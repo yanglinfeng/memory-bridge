@@ -141,6 +141,24 @@
   `CONTRIBUTING.md` 补齐对外联系入口；§6 记入发布期操作禁忌——本地 `dev-history` /
   `pre-refactor-backup` / `archive/master` 等 ref 含有本机绝对路径的历史，不在 `main` 的
   发布范围内，但 `git push --all` / `--mirror` 会把它们推出去。
+- **两个用例此前隐含假定运行环境位于东八区**，在 UTC（CI runner 与多数海外机器）上稳定失败，
+  本地却看不出来——这也是 CI 首次跑红的原因。① `tests/config.test.ts` 用 `assert/strict`
+  比较时区偏移，而零偏移时区下 `-new Date().getTimezoneOffset()` 得到 `-0`、子进程里
+  `String(-0)` 输出 `"0"`，两者被 `Object.is` 判为不等；②
+  `tests/hierarchical-summary-worker.test.ts` 的「跨本地午夜边界」用例把场景时刻与
+  `timezoneOffsetMinutes` 期望值都写死成 UTC 字面量，而日 / 周桶键由
+  `summaryTimezoneOffsetMinutes`（默认跟随本机时区）决定，换时区后会落到别的本地日期。
+  现分别改为：断言前归一化 `-0`；场景时刻按 `config.summaryTimezoneOffsetMinutes` 折算成
+  UTC，期望值对任意时区成立。在 UTC / Asia/Shanghai / America/New_York /
+  Pacific/Kiritimati 四个时区复跑均通过。
+- **bundle 事务临时目录未被忽略**。包名改名后 bundle 切换失败过一次，才暴露出
+  `packaging/pinokio/memory-bridge/.gitignore` 只覆盖 `.app.stage-*` / `.app.rollback-*`：
+  构建脚本在切换失败时会把旧副本保留在 `.bundle.quarantine-<uuid>` 作为事务证据
+  （另有 `.bundle.stage-<uuid>` / `.bundle.rollback-<uuid>`），这些目录含整份 bundle
+  副本，未被忽略时 `git add .` 会把它们一并提交。同时 `check-docs-consistency.mjs` 的
+  目录白名单是精确名匹配，扫进这些事务目录里的 README 会判出一批**假死链**
+  （本地门禁红、CI 却是绿的——因为 CI 每次都是全新 clone，从不会有残留）。现补三条
+  忽略规则，并给检查脚本加上前缀式跳过（`.bundle.` / `.app.`）。
 
 ### 已知问题
 

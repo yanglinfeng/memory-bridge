@@ -64,6 +64,8 @@ ollama pull bge-m3:latest
 
 **Option A — npx (MCP client only)**
 
+> Note: the npm package `mcp-memory-bridge` is still being prepared for publication. If this command returns 404, use Option B or C.
+
 ```bash
 MEMORY_BRIDGE_USER_ID=default npx -y mcp-memory-bridge
 ```

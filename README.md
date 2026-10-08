@@ -65,6 +65,8 @@ ollama pull bge-m3:latest
 
 **方式 A —— npx（只接 MCP 客户端）**
 
+> 注：npm 包 `mcp-memory-bridge` 尚在发布准备中。若此命令报 404，请改用方式 B 或 C。
+
 ```bash
 MEMORY_BRIDGE_USER_ID=default npx -y mcp-memory-bridge
 ```

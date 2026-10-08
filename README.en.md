@@ -154,6 +154,24 @@ scores** — that is part of what "trust layer" means here.
 - [ ] English versions of the core guides
 - [ ] Deeper document parsing: pair with upstream RAGFlow / Docling, and keep Memory Bridge focused on the trust layer above them
 
+## Contact & support
+
+| What | Where |
+|---|---|
+| Bug report | [Issues · bug report form](https://github.com/yanglinfeng/memory-bridge/issues/new?template=bug_report.yml) |
+| Feature request | [Issues · feature request form](https://github.com/yanglinfeng/memory-bridge/issues/new?template=feature_request.yml) |
+| On-premise delivery / commercial license / custom work | [Issues · commercial inquiry form](https://github.com/yanglinfeng/memory-bridge/issues/new?template=commercial_inquiry.yml) or the Commercial category in [Discussions](https://github.com/yanglinfeng/memory-bridge/discussions) |
+| Usage questions, deployment help, tuning notes | [Discussions](https://github.com/yanglinfeng/memory-bridge/discussions) |
+| Security vulnerability | [Security Advisories](https://github.com/yanglinfeng/memory-bridge/security/advisories/new) — **do not open a public issue for security problems**; see [SECURITY.md](./SECURITY.md) |
+
+The maintainer is an individual developer ([@yanglinfeng](https://github.com/yanglinfeng)) and does not
+promise an SLA. Issues are triaged by whether they affect *verifiable citations*, *version
+traceability*, or *permission isolation*; commercial inquiries are answered first.
+
+Licensed under **Apache-2.0**: internal company use, modification, and integration into internal
+systems require **no additional permission**. You only need to get in touch for commercial support
+or an SLA, or to ship Memory Bridge inside a product you sell under a commercial license.
+
 ## License
 
 [Apache-2.0](./LICENSE)

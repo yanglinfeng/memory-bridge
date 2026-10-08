@@ -69,23 +69,23 @@ diff 淹没真实改动。风格上跟随周围代码即可。
 > `packaging/pinokio/memory-bridge/bundle/` 是**构建产物，不入库**——它是源码镜像，改动源码后
 > 必须由脚本重新生成，不要手改或提交。
 
-### 3.1 当前已知的失败用例
+### 3.1 关于失败用例
 
-跑 `npm test` 时你会看到少数失败。这些是**预存在的**，与你的改动无关，请先确认再排查自己：
+当前全量套件（`npm test`，1043 例）是**全绿**的，没有已知失败。曾经长期挂着的 3 例已结清：
 
-- `tests/database.test.ts` — 迁移备份与 `BEGIN IMMEDIATE` 写锁顺序（1 例）
-- `tests/memory-bridge-lifecycle.test.mjs`（`npm run test:lifecycle`）— doctor 相关（2 例）
+- `tests/database.test.ts` 迁移备份与 `BEGIN IMMEDIATE` 写锁顺序 —— 已修（改为取锁后复检
+  数据库文件家族，堵住备份与写锁之间的并发写窗口）
+- `npm run test:lifecycle` 的 2 例 doctor —— 经查是 **Node 版本低于 `engines >= 24`** 所致，
+  非代码缺陷。跑之前先确认 `node -v`。
 
-判断一次失败是否由你的改动引入，**不要只看工作区**（工作区可能同时有别人的改动）。可靠做法是在
-改动前的提交上建一份纯净副本复跑同一用例：
+所以一旦看到红灯，默认就是你的改动引起的。判断一次失败是否由你的改动引入，**不要只看工作区**
+（工作区可能同时有别人的改动）。可靠做法是在改动前的提交上建一份纯净副本复跑同一用例：
 
 ```bash
 git archive <改动前的完整 SHA> | tar -x -C /tmp/mb-pre
 ln -s "$PWD/node_modules" /tmp/mb-pre/node_modules
 cd /tmp/mb-pre && node --test --import tsx --test-name-pattern="关键词" tests/<name>.test.ts
 ```
-
-修复进度见 [Roadmap](README.md#roadmap)。修掉上述任一例都欢迎提 PR。
 
 ## 4. 代码约定
 
@@ -135,6 +135,7 @@ docs(api): 补齐 corpusDomain / classification 入库契约
 - [ ] `npm run typecheck` 通过
 - [ ] `npm run check:docs` 通过（若你改了配置项、npm 脚本、HTTP 路由或 schema 版本）
 - [ ] `npm test` 没有**新增**失败（对照 §3.1 的已知失败清单）
+- [ ] `npm run verify:release-scan` 无阻断项（没把令牌、内网地址、真实业务数据带进来）
 - [ ] 若改了数据库结构：迁移可重入、`SCHEMA_VERSION` 已更新、`docs/data-model.md` 已同步
 - [ ] 若改了默认值：`docs/configuration-reference.md` 已同步
 - [ ] PR 描述里说明了「动机」和「怎么验证」
@@ -154,11 +155,30 @@ docs(api): 补齐 corpusDomain / classification 入库契约
 发现**已经**被提交的敏感文件，请不要只在本地删除——那不会从历史里移除。按
 [SECURITY.md](SECURITY.md) 的方式私下报告，我们会处理历史。
 
+提交前跑一次发布闸门（退出码 0 才算过）：
+
+```bash
+npm run verify:release-scan            # 工作区跟踪文件
+npm run verify:release-scan:history    # 追加扫描待发布历史
+```
+
+> **维护者注意**：本仓库的本地 ref（`dev-history`、`pre-refactor-backup`、`archive/master`、
+> codex checkpoint 等）里存在带本机绝对路径的历史提交。它们**不在** `main` 的待发布范围内
+> （`--all-refs` 会扫出来），所以 `git push origin main` 是安全的。
+> 但 **`git push --all` 与 `git push --mirror` 会把这些内容一并推上去**——发布期请只用
+> `git push origin main`。
+
 ## 7. 报告缺陷与提需求
 
-- 缺陷与需求：走 GitHub Issues。请带上复现步骤、`node -v`、以及 `GET /api/health` 的输出。
-- 安全漏洞：**不要**开公开 Issue，见 [SECURITY.md](SECURITY.md)。
-- 排障顺序：`npm run doctor` → `docs/operator-guide.md` → `docs/logging-guide.md`。
+| 事项 | 通道 |
+|---|---|
+| 缺陷 | [Issues · 缺陷报告模板](https://github.com/yanglinfeng/memory-bridge/issues/new?template=bug_report.yml)，请带上复现步骤、`node -v` 与 `npm run doctor` 的输出 |
+| 新能力 | [Issues · 功能建议模板](https://github.com/yanglinfeng/memory-bridge/issues/new?template=feature_request.yml) |
+| 私有化部署 / 商用授权 / 定制开发 | [Issues · 商业合作模板](https://github.com/yanglinfeng/memory-bridge/issues/new?template=commercial_inquiry.yml) |
+| 用法讨论与部署求助 | [GitHub Discussions](https://github.com/yanglinfeng/memory-bridge/discussions) |
+| 安全漏洞 | **不要**开公开 Issue，见 [SECURITY.md](SECURITY.md) |
+
+排障顺序：`npm run doctor` → `docs/operator-guide.md` → `docs/logging-guide.md`。
 
 提问前请先跑一次 `npm run check:docs` 与 `npm run typecheck`——很多"文档说的和实际不一致"是
 本地分支落后导致的。

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 用法讨论 / 部署求助 · Usage & deployment questions
+    url: https://github.com/yanglinfeng/memory-bridge/discussions
+    about: 检索效果调优、接入方式、部署踩坑等开放讨论请走 Discussions；缺陷与需求请用上面的模板开 Issue。
+  - name: 安全漏洞（请勿公开） · Report a vulnerability privately
+    url: https://github.com/yanglinfeng/memory-bridge/security/advisories/new
+    about: 请勿为安全问题开公开 Issue。走 Security 通道私下报告，处理流程见 SECURITY.md。

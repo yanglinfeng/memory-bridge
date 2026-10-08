@@ -146,6 +146,22 @@ npm run check:docs
   Node < 24 跑 `npm test` 会稳定看到 2 例假红灯
 - [ ] 文档解析深度：推荐接入 RAGFlow / Docling 等上游，忆桥专注其上的可信层
 
+## 联系与支持
+
+| 事项 | 走哪个通道 |
+|---|---|
+| 缺陷报告 | [Issues · 缺陷报告模板](https://github.com/yanglinfeng/memory-bridge/issues/new?template=bug_report.yml) |
+| 功能建议 | [Issues · 功能建议模板](https://github.com/yanglinfeng/memory-bridge/issues/new?template=feature_request.yml) |
+| 私有化部署 / 商用授权 / 定制开发 | [Issues · 商业合作模板](https://github.com/yanglinfeng/memory-bridge/issues/new?template=commercial_inquiry.yml) 或 [Discussions](https://github.com/yanglinfeng/memory-bridge/discussions) 的 Commercial 分类 |
+| 用法讨论、部署求助、调优经验 | [Discussions](https://github.com/yanglinfeng/memory-bridge/discussions) |
+| 安全漏洞 | [Security Advisories](https://github.com/yanglinfeng/memory-bridge/security/advisories/new) —— **请勿为安全问题开公开 Issue**，处理流程见 [SECURITY.md](./SECURITY.md) |
+
+维护者是个人开发者（[@yanglinfeng](https://github.com/yanglinfeng)），不开空头 SLA；缺陷会按「是否影响
+出处可验证 / 版本可追溯 / 权限可隔离」排序，商务类咨询优先回复。
+
+本项目以 **Apache-2.0** 授权：公司内部自用、二次开发、集成进内部系统**都不需要额外申请**。
+只有需要商业支持、SLA 承诺，或要把忆桥以商用许可方式打包进你们对外销售的产品时，才需要联系。
+
 ## License
 
 [Apache-2.0](./LICENSE)

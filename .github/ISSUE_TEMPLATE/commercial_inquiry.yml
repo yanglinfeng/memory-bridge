@@ -1,0 +1,92 @@
+name: Commercial inquiry / 商业合作与私有化部署
+description: 私有化部署、商用授权、定制开发的咨询。也可以在 Discussions 的 Commercial 分类下发帖。
+title: '[commercial] '
+labels:
+  - commercial
+body:
+  - type: markdown
+    attributes:
+      value: |
+        忆桥采用 Apache-2.0 开源协议，内部自用与二次开发均已授权，无需付费。
+
+        以下情形建议先在这里对齐需求：**内网私有化交付**、**需要商业支持/SLA**、
+        **需要定制开发**（如对接你们已有的 OA/AD/知识库）、**希望以商用许可方式集成进你们的商业化产品**。
+
+        本表单是公开的。请只写**需求与约束**，不要填客户名称、合同金额、内部系统地址等敏感信息；
+        如果涉及保密内容，可先只写场景概述，维护者会在此 Issue 内回复并商定后续的私下沟通方式。
+
+  - type: dropdown
+    id: scenario
+    attributes:
+      label: 使用场景 / Scenario
+      description: 选最接近的一项；不明确也没关系，可以选「评估中」。
+      options:
+        - 制度 / 规章文档问答（policy QA）
+        - 合同与单据信息抽取
+        - 售后 / 客服知识库
+        - 研发知识库 / 代码与文档检索
+        - 评估中，还没定
+        - 其他（请在下方说明）
+    validations:
+      required: true
+
+  - type: dropdown
+    id: deployment
+    attributes:
+      label: 部署环境 / Deployment
+      options:
+        - 完全内网（无外网出口）
+        - 内网为主，允许受控访问外部服务
+        - 私有云 / 专有云
+        - 混合部署
+        - 还在讨论
+    validations:
+      required: true
+
+  - type: dropdown
+    id: scale
+    attributes:
+      label: 数据规模量级 / Corpus scale
+      description: 量级即可，用来判断是否需要额外的索引与性能工作。
+      options:
+        - 千页级（< 1 万切片）
+        - 万页级（1 万 – 10 万切片）
+        - 十万页级（10 万 – 100 万切片）
+        - 百万切片以上
+        - 暂不确定
+    validations:
+      required: true
+
+  - type: textarea
+    id: requirement
+    attributes:
+      label: 需求描述 / Requirement
+      placeholder: |
+        例如：希望替换现有的关键词检索，要求答案必须能点回原始文档段落；
+        已有 AD 域账号体系，希望按部门做可见性隔离；需要离线环境，不允许调用外部模型 API。
+    validations:
+      required: true
+
+  - type: input
+    id: timeline
+    attributes:
+      label: 时间要求 / Timeline
+      placeholder: 例如：Q4 前完成 POC / 半年内 / 只是先了解
+    validations:
+      required: false
+
+  - type: input
+    id: contact
+    attributes:
+      label: 联系方式 / Contact
+      description: 可选。留邮箱或 GitHub 用户名即可；**不要填公司全称与内部系统地址**。
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: acknowledge
+    attributes:
+      label: 确认 / Acknowledge
+      options:
+        - label: 我了解本 Issue 是公开可见的，且我未在内容中包含保密信息。
+          required: true

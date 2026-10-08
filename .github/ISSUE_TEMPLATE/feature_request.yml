@@ -1,0 +1,51 @@
+name: Feature request / 功能建议
+description: 建议一个新能力。请尽量说明它解决的具体问题，而不是实现方式。
+title: '[feature] '
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        忆桥刻意不做的事：不做聊天界面、不做通用 RAG 框架、不追"更快的记忆"。
+        它只解决一个问题——**让企业敢把合规文档交给 AI**。判断一个建议是否合身：
+        它是否让「出处可验证 / 版本可追溯 / 权限可隔离」这三件事更强？
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 你想解决的问题 / The problem
+      description: 先讲场景与痛点，不要直接给方案。例如"审计要求能证明某条答案在 X 日基于哪个版本"。
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 你设想的方案 / Proposed solution
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 你试过的替代做法 / Alternatives considered
+      description: 例如现在是怎么绕过去的、为什么不行。
+    validations:
+      required: false
+
+  - type: dropdown
+    id: layer
+    attributes:
+      label: 涉及的层 / Layer
+      options:
+        - 检索与召回质量
+        - 证据、版本与审计
+        - 权限与命名空间隔离
+        - MCP / HTTP 接口
+        - 管理台
+        - 部署与安装
+        - 文档
+        - 不确定
+    validations:
+      required: true

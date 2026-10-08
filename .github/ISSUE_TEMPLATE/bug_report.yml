@@ -1,0 +1,77 @@
+name: Bug report / 缺陷报告
+description: 报告一个可复现的缺陷。请先把「复现步骤」写完整，这决定问题能不能被修掉。
+title: '[bug] '
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢报告。忆桥的定位是「可信层」，所以**任何"答对了但出处错了"都算缺陷**，不只是崩溃。
+        提交前请先跑一次 `npm run doctor`，它会检查环境与 schema 水位。
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: 现象 / What happened
+      description: 实际发生了什么。如果和检索有关，请附上召回解释（管理台「召回解释」页可导出）。
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 预期 / Expected
+      description: 你认为应该是什么结果。
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: 复现步骤 / Steps to reproduce
+      placeholder: |
+        1. 用 X 方式安装，Node 版本 Y
+        2. 执行 `...`
+        3. 看到 ...
+      description: 能一键复现的脚本最好；如果是检索质量问题，请附上原始文档片段与那条 query。
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: 版本 / Version
+      description: 运行 `npm run doctor` 会打印版本与 schema 水位；或给出 commit hash。
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install
+    attributes:
+      label: 安装方式 / Install method
+      options:
+        - 源码运行（npm install && npm run dev）
+        - 一键安装脚本（docs/one-click-installation-and-operation.md）
+        - Pinokio bundle
+        - 自带 Docker / 其他
+    validations:
+      required: true
+
+  - type: input
+    id: env
+    attributes:
+      label: 环境 / Environment
+      description: 操作系统与版本、Node 版本（必须 ≥ 24）、推理运行时（Ollama 版本 / 是否启用 sidecar 重排）。
+      placeholder: 'macOS 15.x · Node 24.x · Ollama 0.x + bge-m3'
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 日志 / Logs
+      description: 贴关键日志片段。**请先去掉令牌、内网地址与业务数据**再贴。
+      render: shell
+    validations:
+      required: false

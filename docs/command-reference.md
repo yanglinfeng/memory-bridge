@@ -23,6 +23,8 @@
 | `npm run prepare:airi-acceptance` | 创建隔离 AIRI 验收环境 | 正式验收先设置持久私有父目录；不应指向正式 profile |
 | `npm run typecheck` | 前后端 TypeScript 类型检查 | 不写构建产物 |
 | `npm run check:docs` | 文档 ↔ 代码一致性对撞（schema 口径、环境变量 / npm 脚本 / HTTP 路由覆盖度、文档引用的源码路径、配置默认值、合规文件、评测分数残留） | 失败时退出码为 1；发布前与每次大改后重跑 |
+| `npm run verify:release-scan` | 发布前敏感信息预检：扫工作区跟踪文件里的本机绝对路径、用户名、私钥、API 密钥、Bearer 令牌、内网地址、真实邮箱，并检查敏感文件是否被跟踪 | 退出码 0/1 可直接接进发布流程；占位值与测试哨兵值降级为"已豁免"但仍全部打印 |
+| `npm run verify:release-scan:history` | 同上，追加扫描待发布历史（`HEAD` 可达的全部文本对象） | 发布前必跑；`--all-refs` 可扩到全部本地 ref（会扫出不在发布范围的本地历史） |
 | `npm test` | 构建服务端并运行全自动化 | Node test runner |
 | `npm run benchmark:rerank` | 真实模型重排 benchmark | Ollama |
 | `npm run benchmark:scale -- --receipt PATH` | 规模 benchmark | 使用隔离数据并原子保存 JSON 回执 |

@@ -325,33 +325,56 @@ function indexedTerms(text: string): string[] {
     .slice(0, 96);
 }
 
-function ftsTerms(query: string): string[] {
+// 词法查询计划：FTS5 表用 tokenize='trigram'，而 trigram 只能匹配长度 ≥3 的
+// 短语。于是"差旅/补贴/AI"这类短查询在旧实现下拿不到任何 FTS 词，整条词法通道
+// 静默空转（实测 8 条中文查询里 7 条词法命中为 0）。这里改为按词切分：
+//   · 长度 ≥3 的词 → FTS 短语（享受 bm25 排序）
+//   · 两字中文词 / 两字母缩写 → 子串匹配（trigram 索引做不到，必须走 LIKE）
+// 单字中文（"的/是/多少"）在长查询里是噪声，仅在整条查询无可匹配词时兜底。
+interface LexicalQueryPlan {
+  match: string | null;
+  substrings: string[];
+}
+
+const LEXICAL_MATCH_TERM_CAP = 48;
+const LEXICAL_SUBSTRING_CAP = 8;
+const WORD_SEGMENTER = new Intl.Segmenter('zh', { granularity: 'word' });
+const HAN_PATTERN = /\p{Script=Han}/u;
+const ALNUM_PATTERN = /[\p{Script=Latin}\p{N}]/u;
+
+export function lexicalQueryPlan(query: string): LexicalQueryPlan {
   const normalized = query
     .normalize('NFKC')
     .toLocaleLowerCase('zh-CN');
-  const terms = new Set<string>();
-  const compact = [
-    ...normalized.replace(/[^\p{Script=Han}\p{N}]/gu, ''),
-  ];
-  for (let index = 0; index <= compact.length - 3; index += 1) {
-    terms.add(compact.slice(index, index + 3).join(''));
-    if (terms.size >= 48) break;
+  const words = [...WORD_SEGMENTER.segment(normalized)]
+    .filter((part) => part.isWordLike)
+    .map((part) => part.segment)
+    .filter((word) => word.length > 0);
+  const matchTerms = new Set<string>();
+  const substrings = new Set<string>();
+  for (const word of words) {
+    const length = [...word].length;
+    if (length >= 3) {
+      matchTerms.add(word);
+      continue;
+    }
+    if (HAN_PATTERN.test(word) ? length === 2 : ALNUM_PATTERN.test(word)) {
+      substrings.add(word);
+    }
   }
-  const latinWords =
-    normalized.match(/[\p{Script=Latin}\p{N}_+-]{3,}/gu) || [];
-  for (const word of latinWords) {
-    terms.add(word);
-    if (terms.size >= 48) break;
+  if (matchTerms.size === 0 && substrings.size === 0) {
+    const compact = normalized.replace(/[^\p{Script=Han}\p{N}]/gu, '');
+    if (compact) substrings.add([...compact].slice(0, 2).join(''));
   }
-  return [...terms];
-}
-
-function ftsQuery(query: string): string | null {
-  const terms = ftsTerms(query);
-  if (terms.length === 0) return null;
-  return terms
-    .map((term) => `"${term.replaceAll('"', '""')}"`)
-    .join(' OR ');
+  const terms = [...matchTerms].slice(0, LEXICAL_MATCH_TERM_CAP);
+  return {
+    match: terms.length
+      ? terms
+          .map((term) => `"${term.replaceAll('"', '""')}"`)
+          .join(' OR ')
+      : null,
+    substrings: [...substrings].slice(0, LEXICAL_SUBSTRING_CAP),
+  };
 }
 
 function episodeBlockedByActiveTombstoneSql(
@@ -1843,8 +1866,37 @@ export class HybridRetrievalIndex {
     input: HybridSearchInput,
     limit: number,
   ): HybridChannelResult<{ id: string }> {
-    const match = ftsQuery(input.query);
-    if (!match) return { rows: [], counts: emptyCandidateCounts() };
+    const plan = lexicalQueryPlan(input.query);
+    const phrase = plan.match
+      ? this.searchLexicalPhrase(input, limit, plan.match)
+      : { rows: [], counts: emptyCandidateCounts() };
+    const substring = plan.substrings.length
+      ? this.searchLexicalSubstring(input, limit, plan.substrings)
+      : { rows: [], counts: emptyCandidateCounts() };
+    // 短语命中（bm25 排序）优先，子串命中补齐；同一条记忆只保留首次出现的位置。
+    const seen = new Set<string>();
+    const rows: Array<{ id: string }> = [];
+    for (const row of [...phrase.rows, ...substring.rows]) {
+      if (seen.has(row.id)) continue;
+      seen.add(row.id);
+      rows.push(row);
+    }
+    const rawCount = phrase.counts.rawCount + substring.counts.rawCount;
+    return {
+      rows,
+      counts: {
+        rawCount,
+        returnedCount: rows.length,
+        cappedCount: Math.max(rawCount - rows.length, 0),
+      },
+    };
+  }
+
+  private searchLexicalPhrase(
+    input: HybridSearchInput,
+    limit: number,
+    match: string,
+  ): HybridChannelResult<{ id: string }> {
     const scope = scopeSql('m', input);
     const rawCount = Number(
       this.database
@@ -1874,6 +1926,55 @@ export class HybridRetrievalIndex {
       (row) => ({ id: asText(row.id) }),
       rawCount,
     );
+  }
+
+  // trigram 索引对不足 3 字的短语无能为力，只能回到基表做子串匹配。
+  // 代价是逐行扫描（无法走索引），换来的是中文短查询不再静默空转；
+  // 查询词数量已由 LEXICAL_SUBSTRING_CAP 限死，作用域条件照旧生效。
+  private searchLexicalSubstring(
+    input: HybridSearchInput,
+    limit: number,
+    needles: string[],
+  ): HybridChannelResult<{ id: string }> {
+    const scope = scopeSql('m', input);
+    const columns = ['m.title', 'm.content', 'm.summary', 'm.tags_json'];
+    const likeArgs: SQLInputValue[] = [];
+    const filterArgs: SQLInputValue[] = [];
+    const hitParts: string[] = [];
+    const filterParts: string[] = [];
+    for (const needle of needles) {
+      const like = `%${needle.replace(/[\\%_]/g, (char) => `\\${char}`)}%`;
+      hitParts.push(
+        `(${columns
+          .map((column) => `CASE WHEN ${column} LIKE ? ESCAPE '\\' THEN 1 ELSE 0 END`)
+          .join(' + ')})`,
+      );
+      filterParts.push(
+        `(${columns.map((column) => `${column} LIKE ? ESCAPE '\\'`).join(' OR ')})`,
+      );
+      for (let index = 0; index < columns.length; index += 1) {
+        likeArgs.push(like);
+        filterArgs.push(like);
+      }
+    }
+    const rows = this.database
+      .prepare(
+        `SELECT m.id,
+                (${hitParts.join(' + ')}) AS substring_hits,
+                COUNT(*) OVER() AS raw_count
+         FROM memories m
+         WHERE (${filterParts.join(' OR ')})
+           AND ${scope.sql.join(' AND ')}
+         ORDER BY substring_hits DESC, m.updated_at DESC, m.id ASC
+         LIMIT ?`,
+      )
+      .all(
+        ...likeArgs,
+        ...filterArgs,
+        ...scope.values,
+        limit,
+      ) as DatabaseRow[];
+    return channelResult(rows, (row) => ({ id: asText(row.id) }));
   }
 
   private searchAnn(

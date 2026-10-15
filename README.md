@@ -11,6 +11,16 @@
 ![Schema](https://img.shields.io/badge/schema-v44-blue)
 ![MCP](https://img.shields.io/badge/protocol-MCP-purple)
 [![ghcr.io](https://img.shields.io/badge/ghcr.io-memory--bridge-blue)](https://github.com/yanglinfeng/memory-bridge/pkgs/container/memory-bridge)
+![MCP Registry](https://img.shields.io/badge/MCP%20Registry-io.github.yanglinfeng%2Fmcp--memory--bridge-purple)
+
+**30 秒跑起来**（无需本机 Node，无需构建）：
+
+```bash
+docker run -i --rm -v memory-bridge-data:/data ghcr.io/yanglinfeng/memory-bridge:latest
+```
+
+已发布到官方 MCP Registry（`io.github.yanglinfeng/mcp-memory-bridge`），多架构镜像见
+[GHCR](https://github.com/yanglinfeng/memory-bridge/pkgs/container/memory-bridge)。
 
 > **EN** — Memory Bridge answers three questions most RAG / memory stacks skip: *where did this sentence come from*, *is the source still valid*, and *who can see it*. Every answer carries source bindings and a retrieval `traceId`; every change is audited; every namespace is isolated. By default, model requests go to local Ollama. If you configure a remote model endpoint, the relevant prompts and context are sent there.
 

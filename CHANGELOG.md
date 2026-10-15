@@ -26,6 +26,9 @@
 - `.mcp.json`：仓库级 MCP 客户端配置，clone 后可直接接入。
 - `.github/workflows/publish.yml`：打 tag 时构建并推送镜像到 GHCR，随后用 GitHub OIDC
   自动发布元数据到官方 MCP Registry（全程不需要 npm 账号或长期凭据）。
+  `server.json` 的包类型由 `npm` 改为 `oci`，`description` 压至官方 100 字符上限内
+  （超限时 Registry 以 422 直接拒绝，`mcp-publisher validate` 可本地复现）。
+  1.0.0 已据此发布，Registry 条目与 GHCR 镜像均以匿名身份验证可读取。
 
 ### 变更
 

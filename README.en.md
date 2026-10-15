@@ -9,6 +9,16 @@
 ![Schema](https://img.shields.io/badge/schema-v44-blue)
 ![MCP](https://img.shields.io/badge/protocol-MCP-purple)
 [![ghcr.io](https://img.shields.io/badge/ghcr.io-memory--bridge-blue)](https://github.com/yanglinfeng/memory-bridge/pkgs/container/memory-bridge)
+![MCP Registry](https://img.shields.io/badge/MCP%20Registry-io.github.yanglinfeng%2Fmcp--memory--bridge-purple)
+
+**Running in 30 seconds** (no local Node, no build step):
+
+```bash
+docker run -i --rm -v memory-bridge-data:/data ghcr.io/yanglinfeng/memory-bridge:latest
+```
+
+Published to the official MCP Registry as `io.github.yanglinfeng/mcp-memory-bridge`;
+multi-arch images on [GHCR](https://github.com/yanglinfeng/memory-bridge/pkgs/container/memory-bridge).
 
 The biggest risk in an AI knowledge base is not "it can't answer" — it's **fabrication**
 and **citing a document that has already been superseded**. Memory Bridge attaches

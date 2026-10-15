@@ -8,6 +8,7 @@
 ![Node](https://img.shields.io/badge/node-%E2%89%A524-green)
 ![Schema](https://img.shields.io/badge/schema-v44-blue)
 ![MCP](https://img.shields.io/badge/protocol-MCP-purple)
+[![ghcr.io](https://img.shields.io/badge/ghcr.io-memory--bridge-blue)](https://github.com/yanglinfeng/memory-bridge/pkgs/container/memory-bridge)
 
 The biggest risk in an AI knowledge base is not "it can't answer" — it's **fabrication**
 and **citing a document that has already been superseded**. Memory Bridge attaches
@@ -62,19 +63,20 @@ ollama pull qwen2.5:14b
 ollama pull bge-m3:latest
 ```
 
-**Option A — npx (MCP client only)**
+**Option A — official image (recommended, zero build)**
 
-> Note: the npm package `mcp-memory-bridge` is still being prepared for publication. If this command returns 404, use Option B or C.
+```bash
+docker run -i --rm -v memory-bridge-data:/data ghcr.io/yanglinfeng/memory-bridge:latest
+```
+
+The image ships both `linux/amd64` and `linux/arm64` (native on Apple Silicon, no emulation).
+
+**Option B — npx (MCP client only)**
+
+> Note: the npm package `mcp-memory-bridge` is still being prepared for publication. If this command returns 404, use Option A or C.
 
 ```bash
 MEMORY_BRIDGE_USER_ID=default npx -y mcp-memory-bridge
-```
-
-**Option B — Docker**
-
-```bash
-docker build -t mcp-memory-bridge .
-docker run -i --rm -v mb-data:/data mcp-memory-bridge
 ```
 
 **Option C — from source (console / development)**
@@ -96,7 +98,24 @@ shows what you actually wrote.
 > container's own loopback). Use `--network host` instead (Docker Desktop requires
 > enabling host networking first). See the header of [Dockerfile](Dockerfile).
 
-Wire it into any MCP client (Claude Desktop, Cline, …):
+Wire it into any MCP client (Claude Desktop, Cline, …). The official image is the least effort:
+
+```json
+{
+  "mcpServers": {
+    "memory-bridge": {
+      "command": "docker",
+      "args": [
+        "run", "-i", "--rm",
+        "-v", "memory-bridge-data:/data",
+        "ghcr.io/yanglinfeng/memory-bridge:latest"
+      ]
+    }
+  }
+}
+```
+
+From a source checkout, point at the absolute path instead:
 
 ```json
 {
@@ -113,9 +132,8 @@ Wire it into any MCP client (Claude Desktop, Cline, …):
 ```
 
 `MEMORY_BRIDGE_USER_ID` (or `MEMORY_BRIDGE_MCP_TOKEN` instead) is required — the server
-refuses to start when both are absent. For Docker, replace the two fields with
-`"command": "docker"` and
-`"args": ["run", "-i", "--rm", "-v", "mb-data:/data", "mcp-memory-bridge"]`.
+refuses to start when both are absent. The image sets `MEMORY_BRIDGE_USER_ID=default`
+already, so the Docker path needs no extra configuration.
 Once the npm package ships, you can also use `"command": "npx"` with
 `"args": ["-y", "mcp-memory-bridge"]`.
 

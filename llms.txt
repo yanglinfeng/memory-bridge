@@ -1,0 +1,44 @@
+# Memory Bridge (忆桥)
+
+> Local-first, evidence-backed memory and knowledge layer for MCP. Runs entirely on your machine with SQLite and a local Ollama runtime, exposes 7 MCP tools over stdio, and returns source citations plus a replayable traceId for every answer. Apache-2.0.
+
+- Repository: https://github.com/yanglinfeng/memory-bridge
+- Container image: `ghcr.io/yanglinfeng/memory-bridge`
+- License: Apache-2.0
+- Protocol: Model Context Protocol (stdio transport)
+
+## What it is for
+
+A memory/knowledge server for MCP clients (Claude Desktop, Cline, Cursor, Continue, Glama) that must survive an audit:
+
+- **Evidence on every answer** — each recall returns the memory items it used, with source, version and a `traceId` that can be replayed later.
+- **Bi-temporal versioning** — a fact that is superseded or revoked stops appearing in default recall, without deleting history.
+- **Namespace and scope isolation** — `user` / `namespace` / `scope` levels keep one department's documents out of another's answers.
+- **Full audit log** — every write, correction and forget is recorded with an actor.
+
+Designed for internal-network document Q&A (policies, contracts, after-sales knowledge bases) where the data must not leave the machine.
+
+## Install
+
+Three supported paths, in order of convenience:
+
+- **Container (no Node.js required)** — `docker run -i --rm -v memory-bridge-data:/data ghcr.io/yanglinfeng/memory-bridge:latest`
+- **From source** — `git clone` then `npm ci && npm run build` (Node.js >= 24)
+- **npx** — `npx mcp-memory-bridge` once the npm package is published
+
+The container listens on loopback only by design; HTTP mode therefore needs `--network host` rather than `-p`.
+
+## Documentation
+
+- [README (中文)](https://github.com/yanglinfeng/memory-bridge/blob/main/README.md): 快速开始、三种安装方式、MCP 客户端配置
+- [README (English)](https://github.com/yanglinfeng/memory-bridge/blob/main/README.en.md): quick start and client configuration
+- [API reference](https://github.com/yanglinfeng/memory-bridge/blob/main/docs/api-接口文档.md): HTTP endpoints and MCP tool schemas
+- [Deployment and upgrade](https://github.com/yanglinfeng/memory-bridge/blob/main/docs/deployment-and-upgrade.md): including the container constraints
+- [CHANGELOG](https://github.com/yanglinfeng/memory-bridge/blob/main/CHANGELOG.md): release history
+- [SECURITY](https://github.com/yanglinfeng/memory-bridge/blob/main/SECURITY.md): threat model and disclosure process
+
+## Optional
+
+- [Benchmarks](https://github.com/yanglinfeng/memory-bridge/blob/main/BENCHMARKS.md): retrieval evaluation results and methodology
+- [CONTRIBUTING](https://github.com/yanglinfeng/memory-bridge/blob/main/CONTRIBUTING.md): development workflow and release gates
+- [server.json](https://github.com/yanglinfeng/memory-bridge/blob/main/server.json): MCP Registry metadata

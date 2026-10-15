@@ -10,6 +10,7 @@
 ![Node](https://img.shields.io/badge/node-%E2%89%A524-green)
 ![Schema](https://img.shields.io/badge/schema-v44-blue)
 ![MCP](https://img.shields.io/badge/protocol-MCP-purple)
+[![ghcr.io](https://img.shields.io/badge/ghcr.io-memory--bridge-blue)](https://github.com/yanglinfeng/memory-bridge/pkgs/container/memory-bridge)
 
 > **EN** — Memory Bridge answers three questions most RAG / memory stacks skip: *where did this sentence come from*, *is the source still valid*, and *who can see it*. Every answer carries source bindings and a retrieval `traceId`; every change is audited; every namespace is isolated. By default, model requests go to local Ollama. If you configure a remote model endpoint, the relevant prompts and context are sent there.
 
@@ -63,19 +64,20 @@ ollama pull qwen2.5:14b
 ollama pull bge-m3:latest
 ```
 
-**方式 A —— npx（只接 MCP 客户端）**
+**方式 A —— 官方镜像（推荐，零构建）**
 
-> 注：npm 包 `mcp-memory-bridge` 尚在发布准备中。若此命令报 404，请改用方式 B 或 C。
+```bash
+docker run -i --rm -v memory-bridge-data:/data ghcr.io/yanglinfeng/memory-bridge:latest
+```
+
+镜像同时提供 `linux/amd64` 与 `linux/arm64`（Apple Silicon 原生运行，不走模拟）。
+
+**方式 B —— npx（只接 MCP 客户端）**
+
+> 注：npm 包 `mcp-memory-bridge` 尚在发布准备中。若此命令报 404，请改用方式 A 或 C。
 
 ```bash
 MEMORY_BRIDGE_USER_ID=default npx -y mcp-memory-bridge
-```
-
-**方式 B —— Docker**
-
-```bash
-docker build -t mcp-memory-bridge .
-docker run -i --rm -v mb-data:/data mcp-memory-bridge
 ```
 
 **方式 C —— 从源码运行（管理台 / 开发）**
@@ -95,7 +97,24 @@ npm start          # HTTP 服务 + 管理台：http://127.0.0.1:3789
 > （映射到的是容器自己的回环，宿主机连不上），请改用 `--network host`（Docker Desktop 需先
 > 在设置里启用 host networking）。完整说明见 [Dockerfile](Dockerfile) 头部注释。
 
-接入任意 MCP 客户端（Claude Desktop / Cline / …）：
+接入任意 MCP 客户端（Claude Desktop / Cline / …），用官方镜像最省事：
+
+```json
+{
+  "mcpServers": {
+    "memory-bridge": {
+      "command": "docker",
+      "args": [
+        "run", "-i", "--rm",
+        "-v", "memory-bridge-data:/data",
+        "ghcr.io/yanglinfeng/memory-bridge:latest"
+      ]
+    }
+  }
+}
+```
+
+从源码运行时改用绝对路径：
 
 ```json
 {
@@ -112,8 +131,7 @@ npm start          # HTTP 服务 + 管理台：http://127.0.0.1:3789
 ```
 
 `MEMORY_BRIDGE_USER_ID`（或改用 `MEMORY_BRIDGE_MCP_TOKEN`）是必填项——两者都缺时服务会拒绝
-启动。用 Docker 时把上面两项换成 `"command": "docker"` 与
-`"args": ["run", "-i", "--rm", "-v", "mb-data:/data", "mcp-memory-bridge"]`。
+启动。镜像里已内置 `MEMORY_BRIDGE_USER_ID=default`，所以 Docker 方式无需再配。
 npm 包发布后，也可改用 `"command": "npx"` 与 `"args": ["-y", "mcp-memory-bridge"]`。
 
 ### 接入示例

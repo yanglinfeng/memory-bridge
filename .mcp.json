@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "memory-bridge": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-v",
+        "memory-bridge-data:/data",
+        "ghcr.io/yanglinfeng/memory-bridge:latest"
+      ]
+    }
+  }
+}

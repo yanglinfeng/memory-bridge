@@ -16,6 +16,24 @@
 
 ## [Unreleased]
 
+### 新增
+
+- 官方容器镜像 `ghcr.io/yanglinfeng/memory-bridge`（`linux/amd64` + `linux/arm64`）。
+  零构建即可接入 MCP 客户端：
+  `docker run -i --rm -v memory-bridge-data:/data ghcr.io/yanglinfeng/memory-bridge:latest`。
+  README 与[部署文档](docs/deployment-and-upgrade.md)的安装路径据此重排，容器方式升为首选。
+- `llms.txt`：供 AI 工具与爬虫读取的项目摘要与文档索引。
+- `.mcp.json`：仓库级 MCP 客户端配置，clone 后可直接接入。
+- `.github/workflows/publish.yml`：打 tag 时构建并推送镜像到 GHCR，随后用 GitHub OIDC
+  自动发布元数据到官方 MCP Registry（全程不需要 npm 账号或长期凭据）。
+
+### 变更
+
+- `server.json` 的包类型由 `npm` 改为 `oci`：npm 包尚未发布，OCI 是当前可用的分发通道。
+  待 npm 包上线后会补回 npm 条目。
+- `server.json` 的 `description` 压缩到官方 100 字符上限内（超长会被 Registry 以 422 直接拒绝）。
+- Dockerfile 增加 `io.modelcontextprotocol.server.name` 标签，供 MCP Registry 校验镜像归属。
+
 ## [1.0.0] - 2026-10-08
 
 首个公开发布。发布动作：切仓库为 public、打 tag `v1.0.0`、在干净目录 clone 跑通 Quick Start。

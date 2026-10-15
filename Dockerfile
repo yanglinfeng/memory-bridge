@@ -51,7 +51,8 @@ FROM node:24-bookworm-slim AS runtime
 LABEL org.opencontainers.image.title="忆桥 (Memory Bridge)" \
       org.opencontainers.image.description="Local-first, evidence-backed knowledge and memory MCP server with audit, versioning and namespace isolation." \
       org.opencontainers.image.source="https://github.com/yanglinfeng/memory-bridge" \
-      org.opencontainers.image.licenses="Apache-2.0"
+      org.opencontainers.image.licenses="Apache-2.0" \
+      io.modelcontextprotocol.server.name="io.github.yanglinfeng/mcp-memory-bridge"
 
 # MEMORY_BRIDGE_USER_ID 必须给出：MCP 启动时若既无 USER_ID 也无 MCP_TOKEN
 # 会直接拒绝启动。

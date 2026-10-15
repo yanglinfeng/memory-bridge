@@ -12,14 +12,20 @@
 | MCP 源码模式 | 开发 MCP | `npm run mcp` |
 | MCP 构建模式 | AIRI/其他客户端稳定使用 | `npm run mcp:built` |
 | 隔离验收环境 | 真实 AIRI 测试，不污染正式库 | `npm run prepare:airi-acceptance` |
-| 容器 · stdio MCP | 客户端以容器接入，宿主机无需 Node | `docker run -i --rm -v mb-data:/data mcp-memory-bridge` |
-| 容器 · HTTP 与管理台 | 容器内跑服务端（仅 Linux 或已启用 host networking 的桌面版） | `docker run --network host -v mb-data:/data mcp-memory-bridge dist/server/index.js` |
+| 容器 · stdio MCP（官方镜像） | 客户端以容器接入，宿主机无需 Node | `docker run -i --rm -v memory-bridge-data:/data ghcr.io/yanglinfeng/memory-bridge:latest` |
+| 容器 · HTTP 与管理台（官方镜像） | 容器内跑服务端（仅 Linux 或已启用 host networking 的桌面版） | `docker run --network host -v memory-bridge-data:/data ghcr.io/yanglinfeng/memory-bridge:latest dist/server/index.js` |
 
 不支持把 HTTP 直接监听到局域网或公网；host 只接受 `127.0.0.1`/`::1`。
 
 ### 容器部署的三条硬约束
 
-镜像由仓库根目录的 `Dockerfile` 构建：
+**首选官方预构建镜像**（`linux/amd64` + `linux/arm64` 双架构，无需本机 Node）：
+
+```bash
+docker run -i --rm -v memory-bridge-data:/data ghcr.io/yanglinfeng/memory-bridge:latest
+```
+
+需要自行构建时，镜像由仓库根目录的 `Dockerfile` 生成：
 
 ```bash
 docker build -t mcp-memory-bridge .

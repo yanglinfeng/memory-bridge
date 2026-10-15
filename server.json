@@ -1,7 +1,8 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.yanglinfeng/mcp-memory-bridge",
-  "description": "Local-first knowledge and memory layer for MCP. Every answer carries source citations and a replayable traceId; bi-temporal document versioning keeps revoked docs out of default recall; user/namespace/scope isolation and a full audit log. Runs entirely on your machine with SQLite and local Ollama — no cloud, no API keys.",
+  "title": "Memory Bridge",
+  "description": "Local-first MCP memory on SQLite: evidence citations, audit trail, namespace isolation.",
   "version": "1.0.0",
   "repository": {
     "url": "https://github.com/yanglinfeng/memory-bridge",
@@ -9,33 +10,52 @@
   },
   "packages": [
     {
-      "registryType": "npm",
-      "identifier": "mcp-memory-bridge",
-      "version": "1.0.0",
+      "registryType": "oci",
+      "identifier": "ghcr.io/yanglinfeng/memory-bridge:1.0.0",
+      "runtimeHint": "docker",
       "transport": {
         "type": "stdio"
       },
-      "environmentVariables": [
+      "runtimeArguments": [
         {
-          "name": "MEMORY_BRIDGE_DATA_DIR",
-          "description": "Absolute path to the directory holding the SQLite database and derived indexes. Defaults to ./data under the current working directory.",
-          "isRequired": false
-        },
-        {
-          "name": "MEMORY_BRIDGE_USER_ID",
-          "description": "Trusted local principal the stdio session acts as. Required unless MEMORY_BRIDGE_MCP_TOKEN is supplied instead — the server refuses to start when both are absent.",
+          "type": "named",
+          "name": "-i",
+          "description": "Keep stdin open. Required by the stdio transport.",
           "isRequired": true
         },
         {
-          "name": "MEMORY_BRIDGE_MCP_TOKEN",
-          "description": "Account credential used to resolve the startup principal. Alternative to MEMORY_BRIDGE_USER_ID; consumed once at startup and then removed from the process environment.",
+          "type": "named",
+          "name": "--rm",
+          "description": "Remove the container when the session ends.",
+          "isRequired": false
+        },
+        {
+          "type": "named",
+          "name": "-v",
+          "value": "memory-bridge-data:/data",
+          "description": "Persist the SQLite database and derived indexes. Without this volume every memory is lost when the container exits.",
+          "isRequired": true
+        }
+      ],
+      "environmentVariables": [
+        {
+          "name": "MEMORY_BRIDGE_USER_ID",
+          "description": "Trusted local principal the stdio session acts as. The image defaults it to 'default'; the server refuses to start when both this and MEMORY_BRIDGE_MCP_TOKEN are absent.",
           "isRequired": false,
-          "isSecret": true
+          "format": "string"
+        },
+        {
+          "name": "MEMORY_BRIDGE_MCP_TOKEN",
+          "description": "Account credential used to resolve the startup principal. Alternative to MEMORY_BRIDGE_USER_ID.",
+          "isRequired": false,
+          "isSecret": true,
+          "format": "string"
         },
         {
           "name": "MEMORY_BRIDGE_OLLAMA_URL",
-          "description": "Base URL of the local Ollama runtime used for generation and embeddings. Defaults to http://127.0.0.1:11434.",
-          "isRequired": false
+          "description": "Base URL of the Ollama runtime used for generation and embeddings. Inside a container this is usually http://host.docker.internal:11434.",
+          "isRequired": false,
+          "format": "string"
         }
       ]
     }

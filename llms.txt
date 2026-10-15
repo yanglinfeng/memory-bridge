@@ -1,6 +1,6 @@
 # Memory Bridge (忆桥)
 
-> Local-first, evidence-backed memory and knowledge layer for MCP. Runs entirely on your machine with SQLite and a local Ollama runtime, exposes 7 MCP tools over stdio, and returns source citations plus a replayable traceId for every answer. Apache-2.0.
+> Local-first, evidence-backed memory and knowledge layer for MCP. Runs entirely on your machine with SQLite and a local Ollama runtime, exposes 10 MCP tools over stdio (7 for memory read/write, 3 for deterministic arithmetic and date answers), and returns source citations plus a replayable traceId for every answer. Apache-2.0.
 
 - Repository: https://github.com/yanglinfeng/memory-bridge
 - Container image: `ghcr.io/yanglinfeng/memory-bridge`

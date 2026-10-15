@@ -205,8 +205,9 @@
 
 **接入面**
 
-- 7 个 MCP 工具：`memory_remember`、`memory_recall`、`memory_get_context`、`memory_update`、
-  `memory_forget`、`memory_list`、`memory_stats`。
+- 10 个 MCP 工具：记忆读写 7 个（`memory_remember`、`memory_recall`、`memory_get_context`、
+  `memory_update`、`memory_forget`、`memory_list`、`memory_stats`）与确定性求解 3 个
+  （`answer_calculator`、`answer_date_diff`、`answer_date_shift`）。
 - HTTP API、OpenAI 兼容代理、React 管理台（候选审核、版本证据、召回解释、索引水位、系统健康）。
 - 知识库 / RAG 应用层直写通道：`kind=document_chunk` 切片入库，字段级契约见 API 接口文档。
 - 可信会话签发与授权矩阵（`MEMORY_BRIDGE_SESSION_GRANTS_FILE`），`npm run kb:provision` 管理。

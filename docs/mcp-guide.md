@@ -125,7 +125,10 @@ project；role 和 session 只对匹配的 ID 可见。
 `memory_remember.scope` 只能选择已绑定的作用域类型，调用方不能提交任意
 `scopeKey`。省略 `scope` 时安全默认写入 `personal/self`。
 
-## 5. 七个工具
+## 5. 十个工具
+
+前七个作用于记忆本身，后三个是确定性求解工具（`answer_*`）：把「两数相加」「两个日期相减」
+这类运算交给内核求值，避免生成侧心算出错。三者都是只读、幂等、无副作用。
 
 | 工具 | 用途 | 关键输入 | 核心返回 |
 |---|---|---|---|
@@ -136,6 +139,12 @@ project；role 和 session 只对匹配的 ID 可见。
 | `memory_forget` | 软删除并写 tombstone | `id`、`reason` | 删除后的记忆状态 |
 | `memory_list` | 管理式列表查询 | 查询、类型、状态、分页 | `{items, total, limit, offset}` |
 | `memory_stats` | 查看账户记忆统计 | 无 | 数量、模型和默认 namespace |
+| `answer_calculator` | 算术表达式求值 | `expression`（`+ - * / % ^`、括号） | 确定性数值结果 |
+| `answer_date_diff` | 两个日期相差多久 | `from`、`to`（支持 ISO / `YYYY/MM/DD` / 中文日期） | 相差天数与年 / 月 / 日拆分 |
+| `answer_date_shift` | 日期平移 | `date`、`days`（整数，可为负） | 结果日期与星期 |
+
+设计说明见 [`design/answer-tools-and-abstention-tuning.md`](design/answer-tools-and-abstention-tuning.md)；
+同一注册表也通过 HTTP `GET /api/tools` 与 `POST /api/tools/<name>/invoke` 暴露。
 
 `kind` 可取：`profile`、`preference`、`project`、`event`、
 `knowledge`、`relationship`、`instruction`。

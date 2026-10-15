@@ -46,7 +46,7 @@ per department. By default, model requests go to local Ollama. If you configure 
 
 **Integration surface**
 
-- **7 MCP tools**: `memory_remember` · `memory_recall` · `memory_get_context` · `memory_update` · `memory_forget` · `memory_list` · `memory_stats`
+- **10 MCP tools**: 7 for memory — `memory_remember` · `memory_recall` · `memory_get_context` · `memory_update` · `memory_forget` · `memory_list` · `memory_stats`; 3 for deterministic answers — `answer_calculator` · `answer_date_diff` · `answer_date_shift`
 - HTTP API, an OpenAI-compatible endpoint, and a React console (candidate review, version evidence, recall explanations, index watermark, system health)
 - A direct write channel for knowledge-base / RAG ingestion layers, with a field-level contract in [docs/api-接口文档.md](docs/api-接口文档.md)
 

@@ -6,7 +6,7 @@
 # 直接接入：
 #
 #   docker build -t mcp-memory-bridge .
-#   docker run -i --rm -v mb-data:/data mcp-memory-bridge
+#   docker run -i --rm -v memory-bridge-data:/data mcp-memory-bridge
 #
 # HTTP 模式（管理台 + HTTP API，默认端口 3789）：
 #
@@ -15,7 +15,7 @@
 #   映射到的是容器自己的回环，宿主机连不上。请改用宿主机网络：
 #
 #     Linux：
-#       docker run --rm --network host -v mb-data:/data \
+#       docker run --rm --network host -v memory-bridge-data:/data \
 #         -e MEMORY_BRIDGE_OLLAMA_URL=http://127.0.0.1:11434 \
 #         mcp-memory-bridge dist/server/index.js
 #

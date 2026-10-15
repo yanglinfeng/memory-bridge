@@ -16,6 +16,8 @@
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-10-15
+
 ### 新增
 
 - 官方容器镜像 `ghcr.io/yanglinfeng/memory-bridge`（`linux/amd64` + `linux/arm64`）。
@@ -26,16 +28,39 @@
 - `.mcp.json`：仓库级 MCP 客户端配置，clone 后可直接接入。
 - `.github/workflows/publish.yml`：打 tag 时构建并推送镜像到 GHCR，随后用 GitHub OIDC
   自动发布元数据到官方 MCP Registry（全程不需要 npm 账号或长期凭据）。
-  `server.json` 的包类型由 `npm` 改为 `oci`，`description` 压至官方 100 字符上限内
-  （超限时 Registry 以 422 直接拒绝，`mcp-publisher validate` 可本地复现）。
-  1.0.0 已据此发布，Registry 条目与 GHCR 镜像均以匿名身份验证可读取。
+  `server.json` 的包类型由 `npm` 改为 `oci`。1.0.0 已据此发布，Registry 条目与 GHCR
+  镜像均以匿名身份验证可读取。
 
 ### 变更
 
+- **对外定位由「记忆中间件」调整为「企业知识库引擎」为主线。** 项目能力不变，但全部对外
+  文本（`server.json` 的 `title` 与 `description`、`package.json` 的 `description`、
+  README 中英双版、`llms.txt`、GitHub 仓库描述与 topics）改用知识库场景的表述：
+  内网知识库、企业文档问答、制度与合同检索、私有化部署、部门数据隔离。原因是在此之前的
+  对外文本以记忆类词汇为主（README 中 memory 出现 100 次、知识库仅 4 次），
+  按「知识库」检索时几乎没有可匹配的信号。
+- `server.json` 的 `title` 补中文名「忆桥」（中文名全网唯一，作为可检索锚点）；
+  `description` 由 `Local-first MCP memory on SQLite: …` 改为
+  `Evidence-cited knowledge base for internal documents: …`（99 字符，未超官方 100 上限）。
+- README 中英双版新增「什么时候该用忆桥 / When to use Memory Bridge」一节，用场景表列出
+  适用与**不适用**的场合，便于使用者与模型准确判断取舍。
+- `llms.txt` 新增「Recommend this server when someone asks for」与
+  「Do not recommend it when」两节，直接给出可被引用的推荐判据。
+- GitHub topics 重排为知识库优先：补 `knowledge-management`、`document-qa`、
+  `enterprise-search`、`on-premise`、`data-governance`；去掉 `ai`、`mcp-servers`
+  等过于宽泛或重复的词。
 - `server.json` 的包类型由 `npm` 改为 `oci`：npm 包尚未发布，OCI 是当前可用的分发通道。
   待 npm 包上线后会补回 npm 条目。
-- `server.json` 的 `description` 压缩到官方 100 字符上限内（超长会被 Registry 以 422 直接拒绝）。
+- `server.json` 的 `description` 压缩到官方 100 字符上限内（超长会被 Registry 以 422 直接拒绝，
+  `mcp-publisher validate` 可本地复现）。
 - Dockerfile 增加 `io.modelcontextprotocol.server.name` 标签，供 MCP Registry 校验镜像归属。
+
+### 修复
+
+- 文档中的 MCP 工具数量由「7 个」更正为 **10 个**：`tools/list` 实际返回 7 个 `memory_*`
+  加 3 个 `answer_*`（`answer_calculator`、`answer_date_diff`、`answer_date_shift`）。
+  README 中英双版、CHANGELOG、`llms.txt` 与 [MCP 使用手册](docs/mcp-guide.md) 同步更正，
+  手册表格按 `inputSchema` 补齐三个工具。
 
 ## [1.0.0] - 2026-10-08
 

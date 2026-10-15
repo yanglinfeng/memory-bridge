@@ -3,7 +3,7 @@
   "mcpName": "io.github.yanglinfeng/mcp-memory-bridge",
   "version": "1.0.0",
   "type": "module",
-  "description": "Local-first, evidence-backed enterprise knowledge base and long-term memory MCP server with audit, versioning, and namespace isolation.",
+  "description": "Local-first, evidence-backed knowledge base and long-term memory MCP server for internal-document Q&A (policies, contracts, after-sales KBs): per-sentence citations with a replayable traceId, version chains, audit log and namespace isolation. 内网 AI 知识库引擎（忆桥）：企业文档问答、制度与合同检索、部门隔离、私有化部署。SQLite + local Ollama.",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",

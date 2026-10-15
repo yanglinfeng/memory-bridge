@@ -1,6 +1,8 @@
 # Memory Bridge
 
-**Local-first, evidence-backed knowledge & memory layer for MCP.**
+**Local-first, evidence-backed knowledge base and long-term memory layer for MCP.**
+
+**Internal document Q&A — policies, procedures, contracts — where every answer carries per-sentence citations and a replayable `traceId`, and deployments stay on your own machines. Also a client-agnostic long-term memory middleware for MCP.**
 
 [English](README.en.md) · [简体中文](README.md)
 
@@ -24,6 +26,26 @@ The biggest risk in an AI knowledge base is not "it can't answer" — it's **fab
 and **citing a document that has already been superseded**. Memory Bridge attaches
 sources to every sentence, keeps an audit trail for every change, and isolates data
 per department. By default, model requests go to local Ollama. If you configure a remote model endpoint, the relevant prompts and context are sent to that service.
+
+## When to use Memory Bridge
+
+You are building an **internal enterprise knowledge base** and any of these is true:
+
+| Your situation | What Memory Bridge gives you |
+|---|---|
+| People ask about **policies, procedures, contracts or after-sales records** — documents that have versions and an owner | Document-level version chains: content changes supersede the old revision, which leaves default retrieval but stays auditable |
+| You must answer "**which file, which paragraph is this answer from?**" | Per-sentence source bindings plus a replayable `traceId` |
+| **Departments must not see each other's documents** | User / namespace / scope isolation with trusted-session issuance |
+| Data **must not leave the internal network** | Local-first: local Ollama by default, no external dependency |
+
+In short: **enterprise knowledge base / internal document Q&A / policy and contract
+retrieval / on-premise deployment** — and, in those same settings, a **long-term memory
+layer**. Memory Bridge is also a client-agnostic MCP memory middleware that plugs into
+Claude Desktop, Cline, Cursor and others.
+
+Conversely, if you only want an AI to remember your coding preferences, or you want a
+hosted cloud memory service, Memory Bridge is not the best fit — its strength is
+**auditability**, and the price is that you deploy it yourself.
 
 ## Why Memory Bridge
 

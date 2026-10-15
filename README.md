@@ -2,7 +2,7 @@
 
 **Local-first, evidence-backed knowledge & memory layer for MCP.**
 
-**带证据引用与审计的本地优先知识库引擎，同时是不绑定任何客户端的 MCP 记忆中间件。**
+**内网 AI 知识库引擎 —— 企业文档问答 / 制度与合同检索 / 私有化部署，每个答案带逐句出处与可回放 traceId；同时是不绑定任何客户端的 MCP 长记忆中间件。**
 
 [简体中文](README.md) · [English](README.en.md)
 
@@ -25,6 +25,21 @@ docker run -i --rm -v memory-bridge-data:/data ghcr.io/yanglinfeng/memory-bridge
 > **EN** — Memory Bridge answers three questions most RAG / memory stacks skip: *where did this sentence come from*, *is the source still valid*, and *who can see it*. Every answer carries source bindings and a retrieval `traceId`; every change is audited; every namespace is isolated. By default, model requests go to local Ollama. If you configure a remote model endpoint, the relevant prompts and context are sent there.
 
 AI 知识库最大的风险不是答不出，是**编造**和**引用已废止的文件**。忆桥给回答配出处、给变更留审计、给部门数据上隔离。默认配置使用本机 Ollama；如果将模型地址配置为远程服务，相关提示词和上下文会发送到该服务。
+
+## 什么时候该用忆桥
+
+你在搭**企业内部知识库**，并且满足下面任意一条：
+
+| 你的场景 | 忆桥对应的能力 |
+|---|---|
+| 员工问的是**制度、流程、合同、售后记录**这类有版本、有归属的文档 | 文档级版本链，内容变更自动轮替，旧版本退出默认检索但仍可审计 |
+| 你被要求回答「**这条结论出自哪份文件哪一段**」 | 逐句来源绑定 + 可回放的 `traceId` |
+| **不同部门不能看到彼此的资料** | 用户 / 命名空间 / 作用域三层隔离 + 可信会话签发 |
+| 数据**不能出内网** | 本地优先，默认本机 Ollama，无外部依赖 |
+
+也就是说：**企业知识库 / 内网文档问答 / 制度与合同检索 / 私有化部署**，以及在这些场景下的**长记忆层**——忆桥同时是不绑定任何客户端的 MCP 记忆中间件，可直接接进 Claude Desktop、Cline、Cursor 等客户端。
+
+反过来，如果你只是想让 AI 记住你的代码风格偏好，或者想要一个托管在云上的记忆服务，忆桥不是最优选择——它的强项是**可审计**，代价是要你自己部署。
 
 ## 为什么是忆桥
 
